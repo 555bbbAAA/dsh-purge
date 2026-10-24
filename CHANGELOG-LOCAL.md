@@ -1,7 +1,11 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.77**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.78**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.78（2026-10-24）
+
+- 自动升级取错版本：`autoUpgradeForHost` 的排序比较器写反（`versionIsNewer(a,b) ? 1 : -1` 是升序），于是每次都装「比本地新的里面最旧的那版」。VM 实测：本地 1.1.74、远端有 1.1.77，结果只升到 1.1.75。改成降序取最高版本。
+- VM 验证：直调 `autoUpgradeForHost` 返回 applied=true 但 to=1.1.75，正是这条 bug 的现场证据。
 ## 1.1.77（2026-10-24）
 
 - 退役 #56 REWIND_HIDE_CUT_ONLY：0.2.1-rc.3 把 rewind 可见性那段代码整体重写了，conversation-client 里既没有 `hidden.add(event.seq)` 也没有 `rewindVisibleEntries`，只剩两段可匹配 —— 强打会把调用插进去而函数不存在。定义留在源码里，补丁表 77→76；VM 上 pending 从 1 归零。
