@@ -1,7 +1,11 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.81**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.82**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.82（2026-10-24）
+
+- 版本源改用 GitHub atom 兜底：`listGithubAtomTags()` 读 `tags.atom` / `releases.atom` 里的 `<title>v1.1.x</title>`，与 GitHub API 的结果合并去重。jsDelivr 的 data 接口对这个仓库直接 500，raw.githubusercontent 在 VM 里超时，atom 这条通。
+- 挑版本抽成纯函数 `pickNewestTag(versions, local)` 并补单测：候选里混入 master、裸 sha、乱序版本时，必须选中「比本地新里最高」的 tag；本地已最新时返回 null。selftest 17 项。
 ## 1.1.81（2026-10-24）
 
 - 版本源加 jsDelivr 兜底：`listJsdelivrTags()` 读 `data.jsdelivr.com/v1/package/gh/<repo>` 的 tag 列表，与 GitHub API 的结果合并去重。现场：VM 里 api.github.com 的 tags 接口 403、raw.githubusercontent 超时，于是 tag 列表为空/很旧，自动升级永远认为「没有新版」；jsDelivr 那条路同期返回 master package.json = 1.1.80，可用。

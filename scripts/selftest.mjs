@@ -178,6 +178,27 @@ await check("升级只认 tag", async () => {
   return true;
 });
 
+// 11) 自动升级必须挑「比本地新里最高的那版」，且只认 tag。
+await check("自动升级挑最高版本", async () => {
+  const pick = updater.pickNewestTag;
+  const list = [
+    { ref: "master", version: "9.9.9" },
+    { ref: "v1.1.75", version: "1.1.75" },
+    { ref: "v1.1.78", version: "1.1.78" },
+    { ref: "v1.1.80", version: "1.1.80" },
+    { ref: "v1.1.79", version: "1.1.79" },
+    { ref: "abc1234", version: "1.1.99" },
+    { ref: "v1.1.74", version: "1.1.74" },
+  ];
+  const got = pick(list, "1.1.74");
+  if (!got || got.ref !== "v1.1.80") throw new Error(`期望 v1.1.80，实际 ${got && got.ref}`);
+  const newerThanAll = pick(list, "1.1.80");
+  if (newerThanAll !== null) throw new Error(`本地已是最新时不该有候选，实际 ${newerThanAll.ref}`);
+  const onlyMaster = pick([{ ref: "master", version: "9.9.9" }], "1.1.80");
+  if (onlyMaster !== null) throw new Error("master 不应被当成可安装版本");
+  return true;
+});
+
 console.log("");
 if (failures.length) {
   console.log(`失败 ${failures.length} 项 / ${pass} 通过`);
