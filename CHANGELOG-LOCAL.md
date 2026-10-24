@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.82**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.83**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.83（2026-10-24）
+
+- `auto-upgrade.json` 补充 `host_install`（宿主安装目录）与 `asar_sealed` / `swap_pending` 两个状态位，方便一眼看出「升级后换包有没有跟上」。
 ## 1.1.82（2026-10-24）
 
 - 版本源改用 GitHub atom 兜底：`listGithubAtomTags()` 读 `tags.atom` / `releases.atom` 里的 `<title>v1.1.x</title>`，与 GitHub API 的结果合并去重。jsDelivr 的 data 接口对这个仓库直接 500，raw.githubusercontent 在 VM 里超时，atom 这条通。
