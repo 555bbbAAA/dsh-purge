@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.89**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.90**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.90（2026-10-24）
+
+- 真因：`/dsh-purge/apply` 从来没排过换包。`asar_swap_started` 只是 `shouldRestart && handoff && sealedNow` 算出来的布尔值，而 `core.scheduleSealedDesktopRestart` 全仓库只有 `reapply.js` 调过 —— 所以点「应用」时 if 条件成立、返回值很漂亮，实际既没观察者也没人改名，asar 一直不动、补丁永远不生效。现在 apply 里真的调一次排程，并把结果放进 `asar_swap` 字段。
 ## 1.1.89（2026-10-24）
 
 - 换包观察者补「卡住就动手」：等 app 退出超过 15 秒（30 次轮询）就直接结束占用 app.asar 的进程，再改名并重新拉起；同时补 `` 初值与 `Write-Log`（日志写到 %TEMP%\dsh-purge-asar-rename-idle.log）。原因是「优雅退出」会顺带把新实例拉起来，新实例立刻又锁住 asar，观察者永远等不到空闲，asar 就永远不挪。
