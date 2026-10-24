@@ -1,4 +1,4 @@
-# 1.2
+# 1.2.1
 
 一句话：把 1.1.81–1.1.125 的全部修复收进一个版本号，重点是「官方更新之后还能正常用」。
 
@@ -55,4 +55,7 @@ ELECTRON_RUN_AS_NODE=1 "<安装目录>\DeepSeek Harness.exe" "<插件目录>\scr
 5. 相同 → up-to-date；首次运行只记基线不安装
 6. 6 小时节流（避免每次启动都下整包），失败只写 `%TEMP%\dsh-purge-same-version.log`，不影响启动
 7. 开关：`autoUpdateSameVersionAsset`（默认开）
+## 1.2.1 修的两个显示层问题
 
+- `/status` 计数矛盾：官方更新后 asar 回到密封态、解包树还没生成时，同一份响应里会出现 `patches_na=76` 与 `patch_counts.pending=76`。现在没有宿主可写时 na=0、全部计入 pending，并给出 `pending_reason: "needs_extract"`。
+- `update.localSha` 显示陈旧提交：从 tarball 安装的插件没有 .git，旧逻辑会回落到 channel.json 里的历史 sha（1.2 曾显示成 ea48268 = v1.1.99）。现在没有 git 信息就留空，界面只按版本号判断。
