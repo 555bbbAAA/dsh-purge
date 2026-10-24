@@ -53,12 +53,25 @@ function main() {
   }
   let bak = `${asar}.bak`;
   if (fs.existsSync(bak)) bak = `${asar}.bak-${Date.now()}`;
-  try {
-    fs.renameSync(asar, bak);
-    log(`renamed app.asar -> ${path.basename(bak)}`);
-  } catch (e) {
-    log(`rename failed: ${e && (e.message || e)}`);
-    return 0;
+  // 刚退出 app 时映射不一定立刻释放（实测 EBUSY），重试到 30 秒
+  const deadline = Date.now() + 30000;
+  let lastErr = "";
+  for (;;) {
+    try {
+      fs.renameSync(asar, bak);
+      log(`renamed app.asar -> ${path.basename(bak)}`);
+      lastErr = "";
+      break;
+    } catch (e) {
+      lastErr = String((e && (e.message || e)) || "");
+      if (Date.now() >= deadline) {
+        log(`rename failed after retries: ${lastErr}`);
+        return 0;
+      }
+      // 同步等待，cmd 会等本进程结束才启动 app
+      const until = Date.now() + 500;
+      while (Date.now() < until) { /* spin */ }
+    }
   }
   try { fs.rmSync(`${asar}.rename-pending`, { force: true }); } catch { /* ignore */ }
   return 0;
