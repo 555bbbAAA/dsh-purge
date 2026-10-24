@@ -967,6 +967,10 @@ body[data-ds-dark-theme] .dshp-restart-card .dshp-btn-primary,body[data-ds-dark-
 .dshp-dock-body .dshp-mute,.dshp-dock-body .dshp-kicker,.dshp-dock-body .dshp-metric span,.dshp-dock-body .dshp-group-h em,.dshp-dock-body .dshp-count,.dshp-dock-body .dshp-rule-meta,.dshp-dock-body .dshp-hint{color:var(--dshp-mute)!important;font-weight:500;text-shadow:none}
 .dshp-dock-body .rt-dock{position:relative;inset:auto;width:100%!important;height:100%;max-width:none!important;flex:1;min-height:0;min-width:0;display:flex!important;flex-direction:column;box-shadow:none;border:0;transform:none!important;opacity:1!important;pointer-events:auto!important;background:transparent!important}
 .dshp-dock-body .rt-grip{display:none!important}
+
+
+
+
 .dshp-dock-body .rt-embedded>.rt-head,.dshp-dock-body .rt-tabs,.dshp-dock-body .rt-foot{flex:none}
 .dshp-dock-body .rt-body{flex:1;min-height:0;overflow:hidden!important;background:transparent!important}
 .dshp-dock-body .rt-main{min-height:0;flex:1;overflow:hidden}
@@ -3514,15 +3518,13 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 .rt-title{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .rt-dot{width:8px;height:8px;border-radius:50%;background:var(--dsw-alias-brand-primary)}
 .rt-spacer{flex:1}
-.rt-btn{border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2);color:inherit;
-  border-radius:6px;padding:3px 9px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.rt-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:30px;min-width:76px;padding:6px 12px;border:1px solid var(--dsw-alias-border-l1);border-radius:6px;background:var(--dsw-alias-bg-layer-2);color:inherit;font-size:13px;line-height:1.2;cursor:pointer;font-family:inherit;white-space:nowrap}
 .rt-btn:hover{border-color:var(--dsw-alias-border-l2)}
 .rt-btn-primary{background:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary);color:#fff}
 .rt-btn-primary:hover{opacity:.9}
 .rt-btn:disabled{opacity:.5;cursor:default}
-.rt-tabs{display:flex;flex-wrap:wrap;gap:2px;padding:6px 12px 0;border-bottom:1px solid var(--dsw-alias-border-l1)}
-.rt-tab{padding:8px 10px 7px;border-radius:0;cursor:pointer;font-size:12.5px;color:var(--dsw-alias-label-secondary);
-  display:inline-flex;align-items:center;gap:5px;border-bottom:2px solid transparent;margin-bottom:-1px;background:transparent}
+.rt-tabs{display:flex;flex-wrap:wrap;gap:4px;padding:6px 12px 0;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.rt-tab{min-width:88px;height:34px;padding:0 14px;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;color:var(--dsw-alias-label-secondary);display:inline-flex;align-items:center;justify-content:center;gap:6px;border-bottom:2px solid transparent}
 .rt-tab:hover{color:var(--dsw-alias-label-primary)}
 .rt-tab.on{color:var(--dsw-alias-label-primary);background:transparent;font-weight:600;border-bottom-color:var(--dsw-alias-brand-primary,#6dbf8c)}
 /* 未读红点：该页签有新内容（新资产/新漏洞/新得分/新步骤…），点开看过就消失 */
@@ -3537,9 +3539,8 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 .rt-seg.on{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-brand-primary)}
 .rt-seg-cidr{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
 .rt-seg-meta{font-size:11px;color:var(--dsw-alias-label-secondary);margin-top:2px}
-.rt-toolbar{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap;align-items:center}
-.rt-input{background:var(--dsw-alias-bg-layer-2);border:1px solid var(--dsw-alias-border-l1);color:inherit;
-  border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;outline:none;min-width:0}
+.rt-toolbar{display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap;align-items:center;row-gap:8px}
+.rt-input{min-height:30px;padding:6px 10px;background:var(--dsw-alias-bg-layer-2);border:1px solid var(--dsw-alias-border-l1);color:inherit;border-radius:6px;font-size:13px;font-family:inherit;outline:none;min-width:0}
 .rt-input:focus{border-color:var(--dsw-alias-brand-primary)}
 .rt-input option,.rt-eng-select option{background:var(--dsw-alias-bg-layer-1,#1c1c1c);color:var(--dsw-alias-label-primary,#f2f2f2)}
 .rt-eng-select{color:var(--dsw-alias-label-primary,#f2f2f2);background:var(--dsw-alias-bg-layer-2,#2a2a2a)}
@@ -4044,20 +4045,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(req),
-    }).then(async (res) => {
-      const text = await res.text().catch(() => '')
-      let data = null
-      try { data = text ? JSON.parse(text) : null } catch {
-        return { ok: false, error: res.status + ' non-json: ' + String(text).slice(0, 120) }
-      }
-      if (!res.ok) {
-        return Object.assign({}, data || {}, {
-          ok: false,
-          error: (data && (data.error || data.message)) || (res.status + ' ' + res.statusText),
-        })
-      }
-      return data
-    })
+    }).then((res) => res.json())
 
     let ui = { open: true, tab: 'assets' }
     const subs = new Set()
@@ -5577,8 +5565,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
           a.href = url
           a.download = 'report-' + String(label || 'score').replace(/[^\w.\-]/g, '_') + '.md'
           a.click()
-          /* 立刻 revoke 会在部分浏览器里让 click 启动的下载断流,延后一拍 */
-          setTimeout(() => { try { URL.revokeObjectURL(url) } catch { /* ignore */ } }, 1000)
+          URL.revokeObjectURL(url)
           setMsg({ ok: '已下载：' + label })
         } catch (e) { setMsg({ err: '下载失败：' + ((e && e.message) || e) }) }
       }
@@ -7173,17 +7160,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
       const [open, setOpen] = React.useState(false)
       const [msg, setMsg] = React.useState(null)
       const [countdown, setCountdown] = React.useState(0)
-      const countdownRef = React.useRef(null)
-      const clearCountdown = React.useCallback(() => {
-        if (countdownRef.current) { try { clearInterval(countdownRef.current) } catch { /* ignore */ } }
-        countdownRef.current = null
-      }, [])
-      React.useEffect(() => () => clearCountdown(), [clearCountdown])
-      const closeModal = React.useCallback(() => {
-        clearCountdown()
-        setCountdown(0)
-        setOpen(false)
-      }, [clearCountdown])
 
       const check = (silent) => {
         if (!silent) setBusy(true)
@@ -7214,10 +7190,9 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
           setMsg({ ok: '已安装 ' + (r.installed || '') + '，正在重启当前宿主…' })
           /* 重启会断开这个页面：倒计时提示用户稍后刷新 */
           setCountdown(6)
-          clearCountdown()
-          countdownRef.current = setInterval(() => {
+          const t = setInterval(() => {
             setCountdown((n) => {
-              if (n <= 1) { clearCountdown(); window.location.reload(); return 0 }
+              if (n <= 1) { clearInterval(t); window.location.reload(); return 0 }
               return n - 1
             })
           }, 1000)
@@ -7249,7 +7224,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
               title: '重新检查 npm 上的最新版本',
             }, busy ? '检查中…' : '检查更新'),
         open
-          ? h('div', { className: 'rt-modal', 'aria-hidden': 'true', onClick: closeModal },
+          ? h('div', { className: 'rt-modal', 'aria-hidden': 'true', onClick: () => setOpen(false) },
               h('div', { className: 'rt-modal-box', onClick: (e) => e.stopPropagation() },
                 h('h4', { style: { marginTop: 0 } }, '更新 RedTeam 模式'),
                 h('div', { className: 'rt-kv' }, h('b', null, '当前版本'), h('span', null, current || '未知')),
@@ -7275,7 +7250,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
                   ? h('div', { className: 'rt-foot' }, '宿主正在重启，' + countdown + ' 秒后自动刷新页面…')
                   : null,
                 h('div', { style: { display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 } },
-                  h('button', { className: 'rt-btn', onClick: closeModal }, '关闭'),
+                  h('button', { className: 'rt-btn', onClick: () => setOpen(false) }, '关闭'),
                   h('button', {
                     className: 'rt-btn rt-btn-primary',
                     disabled: busy || blockers.length > 0 || mode === 'dev',
@@ -8765,6 +8740,99 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					en ? "Got it" : "知道了"));
 		}
 
+		// 页面内嵌面板：整块 UI 直接渲染在「dsh-purge」这个主页面里，
+		// 不再用右下角浮动窗口（Royan 2026-10-25：改用页面内嵌，不要弹窗）。
+		function PurgePage() {
+			const t = useT();
+			const [tab, setTab] = useState("clean");
+			const tabBtn = (id2, label) => h("button", {
+				type: "button",
+				key: id2,
+				onClick: () => setTab(id2),
+				style: {
+					appearance: "none", cursor: "pointer", background: "transparent",
+					border: "0", borderBottom: "2px solid " + (tab === id2 ? "var(--dsw-alias-brand-primary, #6d8f78)" : "transparent"),
+					color: tab === id2 ? "var(--dsw-alias-label-primary, #f2f2f2)" : "var(--dsw-alias-label-secondary, #b8b4ac)",
+					padding: "8px 14px", font: "inherit", fontWeight: tab === id2 ? 600 : 500,
+				},
+			}, label);
+			// 内容区套一层 dshp-dock-body：演练台/清洗面板的样式全都挂在
+			// `.dshp-dock-body .rt-*` 这个作用域下，不套这层内嵌后排版会散
+			// （2026-10-25：Royan 反馈「演练台排版没做好」就是缺这一层）。
+			const bodyStyle = {
+				flex: 1, minHeight: 0, display: "flex", flexDirection: "column",
+				overflow: "hidden", background: "transparent", padding: 0,
+			};
+			const drillNode = (typeof __dshPurgeDrill !== "undefined" && __dshPurgeDrill && __dshPurgeDrill.Panel)
+				? (readDrillAuth()
+					? h(__dshPurgeDrill.Panel, { embedded: true })
+					: h("div", { style: { padding: 16, color: "var(--dsw-alias-label-secondary, #b8b4ac)" } }, t("dock.unauthorized")))
+				: h("div", { style: { padding: 16, color: "var(--dsw-alias-label-secondary, #b8b4ac)" } }, "演练台模块未加载");
+			// 只有「清洗」内嵌在页面里；「演练台」仍走旧的浮动面板（点按钮弹出）。
+			const drillOpen = () => {
+				try { setDock({ open: true, tab: "drill", authOpen: false, pending: "tab" }); } catch { /* ignore */ }
+			};
+			// 演练台入口做成显眼的主色实心按钮（Royan：要明显的按钮）
+			const drillBtn = {
+				appearance: "none", cursor: "pointer", marginLeft: "auto",
+				display: "inline-flex", alignItems: "center", gap: 6,
+				minHeight: 32, padding: "6px 16px", borderRadius: 8,
+				border: "1px solid var(--dsw-alias-brand-primary, #6d8f78)",
+				background: "var(--dsw-alias-brand-primary, #6d8f78)",
+				color: "#fff", font: "inherit", fontSize: 13.5, fontWeight: 600,
+				boxShadow: "0 1px 2px rgba(0,0,0,.25)",
+			};
+			return h("div", { style: { display: "flex", flexDirection: "column", height: "100%", minHeight: 0 } },
+				h("div", { style: { display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--dsw-alias-border-l1, #444)", padding: "6px 12px", flex: "none" } },
+					h("b", { style: { fontSize: 13.5 } }, t("dock.clean")),
+					h("button", { type: "button", style: drillBtn, title: "打开演练台（浮动面板）", onClick: drillOpen }, "⚑ " + t("dock.drill") + " ↗")),
+				h("div", { className: "dshp-dock-body", style: bodyStyle },
+					h("div", { style: { flex: 1, minHeight: 0, overflow: "auto" } }, h(SettingsRoot, { t }))));
+		}
+		// 标准入口（设置 → dsh-purge 一节）：插件只保留这一个入口，
+		// 打开面板、看状态都从这里进；不再在右下角/标签栏放浮动按钮。
+		function PurgeSettingsSection() {
+			const st = useDock();
+			const [info, setInfo] = useState(null);
+			useEffect(() => {
+				let alive = true;
+				fetch("/dsh-purge/status", { headers: { accept: "application/json" } })
+					.then((r) => (r.ok ? r.json() : null))
+					.then((d) => { if (alive) setInfo(d); })
+					.catch(() => { /* 状态取不到不影响入口 */ });
+				return () => { alive = false; };
+			}, [st.open]);
+			const version = info && info.plugin_version ? String(info.plugin_version) : "";
+			const sealed = info ? Boolean(info.asar_still_sealed) : false;
+			const applied = info ? (info.patches_applied ?? 0) : 0;
+			const total = info ? (info.patches_total ?? 0) : 0;
+			const box = { display: "flex", flexDirection: "column", gap: 8, padding: "12px 0" };
+			const row = { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" };
+			const badge = {
+				fontSize: 12, lineHeight: "18px", padding: "0 8px", borderRadius: 9,
+				border: "1px solid var(--dsw-alias-border-l1, #555)",
+				color: "var(--dsw-alias-label-secondary, #b8b4ac)",
+			};
+			const hint = { margin: 0, fontSize: 13, color: "var(--dsw-alias-label-secondary, #b8b4ac)" };
+			const btn = {
+				alignSelf: "flex-start", appearance: "none", cursor: "pointer",
+				border: "1px solid var(--dsw-alias-brand-primary, #6d8f78)", borderRadius: 8,
+				background: "transparent", color: "var(--dsw-alias-label-primary, #f2f2f2)",
+				padding: "6px 14px", font: "inherit",
+			};
+			return h("div", { style: box },
+				h("div", { style: row },
+					h("b", { style: { fontSize: 14 } }, "dsh-purge"),
+					version ? h("span", { style: badge }, "v" + version) : null,
+					sealed ? h("span", { style: badge }, translate ? translate("dock.unauthorized") : "sealed") : null),
+				h("p", { style: hint },
+					info
+						? ("补丁 " + applied + "/" + total + (sealed ? " · 仍为密封包，打开面板点「应用」完成换包" : " · 已生效"))
+						: "读取状态中…"),
+				h("button", { type: "button", style: btn, onClick: () => toggleDock() },
+					st.open ? (translate ? translate("dock.close") : "收起面板") : "打开面板"));
+		}
+
 		function apply(ctx) {
 			ctx.effect(() => ctx.locale.register(NS, { zh, en }), "dsh-purge: dictionaries");
 			const t = ctx.locale.bind(NS);
@@ -8773,7 +8841,25 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeLauncher), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(UpdateBanner))));
+			}, () => h(react.Fragment, null, h(PurgeDock), h(EnvAdaptSendGate))));
+			// 唯一入口：左侧侧栏项 + 对应主页面（与「房间」插件 dsh-live-room 同一套挂法：
+			// sidebar.panellist 出图标/名称，main 用同一个 key 出页面）。
+			try {
+				ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+					name: "sidebar.panellist",
+					id: "dsh-purge",
+					order: 30,
+					label: () => "dsh-purge",
+					locale: NS,
+				}, () => h("span", { style: { fontSize: 15, lineHeight: "20px" } }, "⛨")));
+				// 清洗页内嵌在页面里；演练台仍走旧的浮动面板（Royan 2026-10-25 定）。
+				ctx.slots.inject("main", () => ctx.slots.register({
+					name: "main",
+					key: "dsh-purge",
+				}, PurgePage));
+			} catch (e) {
+				try { console.warn("[dsh-purge] sidebar entry skipped:", e); } catch { /* ignore */ }
+			}
 			try {
 				if (typeof ctx.inject === "function") {
 					ctx.inject(["sessions", "uiWorkspace", "workspaces", "conversation"], (host) => installRewindUi(host));

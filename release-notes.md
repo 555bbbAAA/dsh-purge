@@ -36,3 +36,10 @@ ELECTRON_RUN_AS_NODE=1 "<安装目录>\DeepSeek Harness.exe" "<插件目录>\scr
 4. 安装到两处目录，回写 `host_version`，记 `auto-upgrade.json`（含 `reason` / `candidate` / `plugin_version_before`），然后自动重启
 5. 开关：`autoUpdatePluginOnHostChange`（默认开）、`autoUpdateOnStart`（默认关）、`autoApplyOnStart`（默认开）
 6. 版本 tag 允许两段（`v1.2`）与三段（`v1.2.0`）：1.2 之前只认三段，自家发的 `v1.2` 会被 `isInstallableTag` 拒掉，自动更新永远看不到它
+
+## 仍在 v1.2 内的后续改动（2026-10-25）
+
+- 入口标准化：左侧侧栏一项 `dsh-purge`（`sidebar.panellist` + `main`），删除右下角浮动按钮、标签栏按钮、首屏挂件与更新浮层。
+- 清洗页改为**页面内嵌**（整块 UI 渲染在插件页里，不再弹窗）；演练台仍走旧浮动面板，入口为页面右上角主色按钮「⚑ 演练台 ↗」。
+- 安装位标准化：`profiles/<profile>/node_modules/<pkg>` 改为真实目录，依赖写 `file:<tarball>`（不再用 Junction 指向源码目录）；tarball 由 `npm pack` 产出。
+- 演练台按钮/页签尺寸统一（min-height 30px、等宽页签、工具条间距 8）。
