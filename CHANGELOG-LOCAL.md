@@ -32,6 +32,12 @@
 
 lib/core.js.bak-compat-20261024-150122、bin/dsh-purge.js.bak-compat-20261024-150122、cordis.patch.yml.bak-compat-20261024-150122、CHANGELOG-LOCAL.md.bak-compat-20261024-150122。
 
+## 0.0f 再清一批死文档与冗余资源（2026-10-24）
+
+- 删除 docs/preview 七张截图（694 KB）、docs/banner.svg、README.zh-CN.md（29,929）、screenshots.json、scripts/export-engagement-report.mjs（0 引用）、UPGRADE.md、LINUX.md
+- 判据：截图只被 README.zh-CN 与 screenshots.json 引用；两张上游授权/披露文件保留（合规要求）；lib 下每个模块都有实际引用，未动的
+- package.json 的 files 白名单同步去掉 README.zh-CN.md 与 screenshots.json
+
 ## 0.0e 目标宿主提到 0.2.1-rc.3（2026-10-24）
 
 - package.json 的 dshTarget 从 0.2.1-rc.2 提到 0.2.1-rc.3（npm 的 next 通道，10-23 发布；latest 仍是 rc.2，桌面 nightly 已经在推 rc.3）

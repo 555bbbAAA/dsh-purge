@@ -35,7 +35,6 @@ dsh plugin add ./dsh-purge-1.1.72.tgz
 
 - `INSTALL.md` 安装与排障
 - `CHANGELOG-LOCAL.md` 本地变更记录
-- `UPGRADE.md` 升级说明
 
 ## English
 

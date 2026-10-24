@@ -28,10 +28,8 @@
     "scripts",
     "client.js",
     "cordis.patch.yml",
-    "screenshots.json",
     "INSTALL.md",
     "README.md",
-    "README.zh-CN.md",
     "LICENSE"
   ],
   "scripts": {
