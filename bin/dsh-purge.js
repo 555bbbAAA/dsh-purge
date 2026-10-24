@@ -31,7 +31,7 @@ function printStatus(state) {
   const applicable = core.ALL_PATCHES.filter((p) => state.patch_status[p.id] !== "na").length;
   out.push(`  补丁 ${state.patches_applied}/${core.ALL_PATCHES.length} 已清洗, ${state.patches_pending} 待清洗`);
   out.push(`      口径：完整表 ${core.ALL_PATCHES.length} 条，其中 ${applicable} 条在当前布局适用`);
-  out.push("      插件面板按显示分组折叠计数（分母更小，如 61/66）；两个口径的「待清洗」应当一致");
+  out.push("      面板与命令行现已同一口径（完整表）；分组数字另存 patches_*_grouped 供折叠视图使用");
   for (const p of core.ALL_PATCHES) {
     const s = state.patch_status[p.id];
     const mark = s === "applied" ? "✓" : s === "pending" ? "✗" : "·";
