@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.92**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.93**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.93（2026-10-24）
+
+- 换包链路的诊断落盘：新增 `%TEMP%\dsh-purge-watch.log`，记录「armed（含 exe/asar/DSH_HOME/脚本路径）」「WMI 创建观察者的结果」「失败原因」；观察者自己的 `dsh-purge-asar-rename-idle.log` 记 start 与「卡住 15 秒强杀」。无控制台环境里 console.warn 看不到，只能靠这两份文件定位断点。
 ## 1.1.92（2026-10-24）
 
 - 观察者启动失败的真因：`-DshHome ""` 这样的空参数拼进 WMI 的 CommandLine 会被拆坏，`Win32_Process.Create` 直接失败 —— 症状是 lock 留在盘上、日志里连 `start` 那行都没有。改成只有 `DSH_HOME` 非空时才追加该参数。
