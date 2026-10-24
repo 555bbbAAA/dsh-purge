@@ -34,6 +34,10 @@
   inject: [systemPrompt, tools]
 
 - insert:
+    # runtime 自愈：必须最先加载（缺 resources\runtime 时宿主会在 dsh-base 阶段崩）
+    - id: dsh-purge-preflight
+      name: 'dsh-purge/preflight'
+
     - id: dsh-purge
       name: 'dsh-purge'
       inject: [systemPrompt, tools]

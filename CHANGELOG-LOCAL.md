@@ -1,7 +1,65 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.112**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.125**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.125（2026-10-25）
+
+- 口径定稿：**对外计数一律用 core 的 patch_status**（按文件内容判定，唯一权威），	arget_present 降级为排查提示字段，不再覆盖状态。1.1.123 用「目标存在性」覆盖状态，导致 #67/#72 等明明已打的补丁被标成 skipped（	argetFiles 映射每个键只代表一个主文件，不代表补丁全部落点），面板一度掉到 35/76。
+- 保留 patch_counts（按权威状态汇总）与每条补丁的 	arget_present，#24 类「目标已不存在」的异常仍能从 	arget_present=false 看出来，但不会再篡改计数。
+## 1.1.124（2026-10-25）
+
+- 修 1.1.123 引入的误报：现算目标存在性时**改用 core.targetFiles() 的真实映射**（它已处理 dsh- 前缀、npm 嵌套安装、packages/<层>/<包> 布局），不再自己按 ile+el 拼路径。原先那套把 desktop-shell（实为 app 的 lib/main.js）、pi-ai-*、preset-* 等全部误判「无目标」，导致面板从 70/76 掉到 47/76。
+- 映射里**没有该键**时视为「未知」而不是「无目标」（避免又一类假阴性）；只有所有已知映射都指向不存在的文件才判 skipped。
+- 结果：#24 这类真正没有落点的补丁仍显示 skipped，其余恢复真实状态。
+## 1.1.123（2026-10-25）
+
+- **B 修复**：/status 改为现算补丁视图 —— 每个补丁先检查目标文件是否真的存在（ile 支持数组，目录名允许带/不带 dsh- 前缀，el 为空视作包目录存在即可），目标不存在的补丁一律判 skipped，不再沿用 pplied.json 的历史戳。现场：#24 PRESET_FETCH_ENABLED 的 6 个 preset 在 rc.3 归档与解包树里都没有 gent.cordis.yml，却长期显示 applied。新增 patch_counts 汇总。
+- **R5 修复**：preflight 每次启动清理 <DSH_HOME>\plugins 与 profiles\desktop\node_modules 下的 dsh-purge.bak-* / dsh-purge.rc3-*，只保留最新 1 个；本机模拟验证（3 个备份 → 删 1 留 1，真目录不动）。
+- **R7 修复**：应用进度透出 —— 新增 pply_progress（phase: extracting / patching / swapping，含 elapsed_ms），/status 可查，解包 60-90 秒期间不再是黑盒。
+## 1.1.122（2026-10-25）
+
+- 修「回退之后又显示补丁已丢失」的误报：HTTP /dsh-purge/revert 现在写 `<DSH_HOME>\dsh-purge\last-revert.json`（at / reverted / errors / still_applied），/status 在 30 分钟内看到它就**不再报 patches_lost**。
+- 新增 `revert_info` 与 `revert_incomplete`：回退不完整（备份被烧导致 revert 静默跳过）时面板能显式提示，不再混进「丢失」。实测现场：回退后仍有 #2 #3 #21 #24 #50 五条 applied。
+- 配套：无。
+## 1.1.121（2026-10-25）
+
+- 换包助手（scheduleAsarSwapRestart）也不再闪黑框：它原来是 `schtasks /tr "powershell ... -WindowStyle Hidden -File x.ps1"` —— 任务计划会先给控制台分配窗口，`-WindowStyle Hidden` 只是窗口起来之后再藏，用户仍能看到一闪。现在先生成 `x.vbs`（`sh.Run cmd,0,False`）并用 `schtasks /tr "wscript.exe //nologo x.vbs"` 启动；写 vbs 失败才回落到原来的 powershell 直启。
+## 1.1.120（2026-10-25）
+
+- 换包观察者不再闪命令行窗口：schtasks 的 `/TR` 从 `xxx.cmd` 改成 `wscript.exe //nologo xxx.vbs`，VBS 里用 `sh.Run cmd, 0, False`（窗口样式 0 = 隐藏）调 powershell。之前用 .cmd 包一层，任务计划执行时会在用户桌面弹一个控制台窗口。
+- 功能不变：观察者仍负责「宿主退出后把 app.asar 改名成 .bak → 写解包标记 → 重新拉起 exe」。
+## 1.1.119（2026-10-25）
+
+- 修 R1 的真正根因：**「应用」这条流程自 1.1.111 起根本没在换包** —— 当时把那一段换成了 `swapScheduled = {via:"needs-postinstall"}` 的占位，于是补丁写完就结束，asar 一直不动、标记自然也不写。现在恢复为调用 `core.scheduleSealedDesktopRestart(handoff)`：先直接试 `renameAsarAside`（唯一咽喉点，成功即写 `.dshpurge-unpacked`）；宿主仍在跑、asar 被映射住时落回 watcher/PS1。
+- PS1 换包脚本也补写标记（`moved-ok` 之后写 `.dshpurge-unpacked`），保证外部进程那条路径同样留痕，避免状态反复翻转。
+- 手工验证：直接调 `renameAsarAside` → `renamed:true`、asar→bak、标记内容 `... unpacked (renameAsarAside)`。
+## 1.1.118（2026-10-25）
+
+- 压测暴露的 R9：preflight 只按 `USERPROFILE` 猜安装目录，插件被别的账号上下文驱动（实测以 dshops 起）时会「找不到宿主安装目录」直接 skip。现在**首选 `process.execPath`**（插件跑在宿主进程里，那就是 DeepSeek Harness.exe），再依次回落 DSH_DESKTOP_INSTALL / USERPROFILE / Program Files。
+- 备份检索放宽：`DSH_HOME` 下没有备份时，会扫描 `C:\Users\*\.dsh\dsh-purge\runtime-backup`，避免「进程跑在 A 账号、备份在 B 账号」时恢复不到。本机模拟验证：假安装目录缺 SKILL.md/versions.json + 存在备份 → 恢复成功。
+## 1.1.117（2026-10-25）
+
+- 修 1.1.116 的接线错误：preflight 原本被我写进 `- id:` 覆盖段（那是「改已有插件」的语法，宿主直接忽略），现在放进 `- insert:` 列表**第一条**，才会真正新增并最先加载。
+- 提示：仅靠 patch 还不够 —— profile 的 `dsh.profile.bundles` 顺序仍决定 bundle 加载次序；需要把 `dsh-purge` 排到 `@deepseek-ai/dsh-base` 之前（1.1.117 里 preflight 首次成功加载后会自动重排，下次启动生效）。
+## 1.1.116（2026-10-25）
+
+- 新增 `lib/preflight.js`（插件 id `dsh-purge-preflight`，`inject: []` 零依赖）：启动早期做 runtime 自愈 —— ①缺 `office-skills\office\SKILL.md` 等关键文件时用包内 `assets/runtime-min`（23KB）补齐 ②runtime 完整且未备份时备份到 `<DSH_HOME>\dsh-purge\runtime-backup` ③残缺且有备份时整目录恢复。
+- preflight 会把本插件在 profile `dsh.profile.bundles` 里提到**最前**（写盘无 BOM、写前写后各 JSON 校验一次，失败保持原样）。为什么必须最前：`resources\runtime` 是 dsh-base 加载 dsh-skill-office 时就要读的，排在其后则崩溃发生时 preflight 还没跑（2026-10-25 同一晚复发四次）。
+- 背景：官方安装器/更新器会漏写或清空 `resources\runtime`，导致启动即 `ENOENT ... office-skills\office\SKILL.md` 崩，插件此前无法自救。
+## 1.1.115（2026-10-25）
+
+- 修 R8「全新安装误报『补丁已丢失』」：`applied.json` 会跨重装保留，旧的 applied 戳让 `patchesLostAfterHostReset()` 认为补丁打过又被还原，于是全新密封安装面板直接显示「补丁已丢失」。现在只要「没解包树 + 没标记」（= 这一份安装从没打过补丁）就判定未丢失。
+- `patches_total` 改为恒为完整表长度（以前 `ai_base` 为空时是 0，面板因此显示 `0/0 · na 76`，像插件坏了）。
+## 1.1.114（2026-10-25）
+
+- 修 R1「换包成功后不写解包标记」：把写标记下沉到**唯一咽喉点** `extract-asar.renameAsarAside` —— 只要 asar 被挪走，就在同目录落 `.dshpurge-unpacked`。之前只写在 `core.scheduleSealedDesktopRestart`，而换包实际常走 reapply 那条路径，所以标记常年缺失（03:33 实测 marker=False）。本机单元验证：调一次 renameAsarAside 后 asar→bak 且 marker 立刻生成。
+- 修 R2「`/status` 的 `needs_extract` 没透出」：index.js 自己拼的 status 对象补上该字段（asar 在 + 解包树不在 → true）。
+- 修 R4「全新密封安装显示 0/0 · na 76」：status 增加 `initialized`，配合 `needs_extract` 可区分「未初始化」与「真的没补丁可打」。
+## 1.1.113（2026-10-25）
+
+- 修「密封状态第一次点应用什么都不写」：`resolveOfficialAiBase` 现在一旦发现解包树不存在就强制 `upgrade: true` 重新解包（旧 `unpacked-asar.json` 戳会让 `shouldExtractAsar` 误判「已经解过」，实测第一次点应用返回 applied 5/76、pending 62、sealed True、apply 日志无新行）。
+- 修「换包后不写标记」：新增 `core.writeUnpackedMarker`，`scheduleSealedDesktopRestart` 改名成功后立刻落 `resources\.dshpurge-unpacked`，自愈逻辑不会再按 asar 不存在就把包装回来 / 把解包树改名成 `app.dshpurge-prev`。
+- `/status` 新增 `needs_extract`：asar 在、解包树不在时为 true，用来区分「没有落点」和「真的有待清洗补丁」（以前一律报 pending 62，误导排查）。
 ## 1.1.112（2026-10-25）
 
 - 修「postinstall 与插件自愈互相拆台」：新增解包模式标记 `resources\.dshpurge-unpacked`（postinstall 写）。`desktopAsarStillSealed()` 见到标记就返回 false，从而不再触发「恢复 asar / 把 app 挪成 app.dshpurge-prev」那套归位逻辑（之前的实测现象：postinstall 改名成功后，启动一次 asar 又被装回来、解包树被改成 `app.dshpurge-prev`）。
