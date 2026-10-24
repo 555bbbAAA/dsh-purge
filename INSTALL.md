@@ -64,7 +64,7 @@ if (Test-Path $dst) {
 
 # 2) 解压
 Expand-Archive "<zip 路径>" -DestinationPath "C:\dp" -Force
-Move-Item "C:\dp\dsh-purge-1.1.71c" $dst -Force
+Move-Item "C:\dp\dsh-purge-1.1.72" $dst -Force
 
 # 3) 向 profile 注册依赖（缺这一步插件不会被加载）
 dsh plugin --profile desktop add "file:$dst"

@@ -1842,8 +1842,8 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			const localVer = (s && s.plugin_version) || (updateInfo && updateInfo.localVersion) || "";
 			const renderEdition = (id) => {
 				// 本地兼容包：隐藏版本切换入口。
-				// 下拉第一项取自上游 master 分支 HEAD 的 package.json 版本（实测 1.1.72，从未发过 tag），
-				// 点它会把插件目录换成上游半成品并冲掉 1.1.71c 的全部修复。
+				// 下拉第一项取自主仓库 master 的 package.json 版本；master 是开发中的代码，
+				// 点它会把插件目录换成半成品并冲掉本兼容包的修复。发版只认 tag。
 				// 服务端 lib/update.js 的 handleUpdateOp() 也做了同样的拦截，双保险。
 				return null;
 				// eslint-disable-next-line no-unreachable
