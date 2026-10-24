@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.88**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.89**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.89（2026-10-24）
+
+- 换包观察者补「卡住就动手」：等 app 退出超过 15 秒（30 次轮询）就直接结束占用 app.asar 的进程，再改名并重新拉起；同时补 `` 初值与 `Write-Log`（日志写到 %TEMP%\dsh-purge-asar-rename-idle.log）。原因是「优雅退出」会顺带把新实例拉起来，新实例立刻又锁住 asar，观察者永远等不到空闲，asar 就永远不挪。
 ## 1.1.88（2026-10-24）
 
 - 密封态换包改走确定性路径：`scheduleAsarSwapRestart` 在 Windows 上先用 WMI 观察者（`scheduleAsarRenameWhenIdle`）+ 优雅退出，老的三条路（PS1 直接 spawn、schtasks、restart-desktop.js helper）在会话 0 无控制台环境里实测都没落地 —— apply 返回 `asar_swap_started: true`，但既没有守护进程也没有 swap 日志，asar 一直不挪，表现就是「面板说打好了、实际还读归档」。
