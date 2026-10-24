@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.103**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.104**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.104（2026-10-25）
+
+- 密封态「应用」后的重启改走 PS1/helper：`scheduleApplyRestart` 直接调 `desktop.scheduleAsarSwapRestart`（先 kill Electron → 改名 → 重新拉起），不再走 `core.restartSealedDesktopIfNeeded` 那条「观察者 + 宿主自己 exit」。实测证据：00:24:40 补丁写完、ename-pending 生成，但 sar-swap.log 没有新记录，00:25:33 又出现 `dsh desktop host stopped` —— 说明宿主是自退被外壳判崩溃，而且外壳活着导致 asar 一直锁着。
 ## 1.1.103（2026-10-25）
 
 - 回退 1.1.88 的「观察者优先」：密封态换包改回走 PS1/helper（先杀 Electron → 再改名 → 再拉起，带优雅握手）。原因：让宿主自己 exit 会被外壳判成崩溃、弹 `dsh desktop host stopped`（实测 00:14:29），而且外壳还活着、asar 一直锁着，观察者永远等不到（00:15:12 日志里还在 `keep waiting`）。观察者降级为 PS1 不可用时的兜底。
