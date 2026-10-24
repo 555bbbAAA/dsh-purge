@@ -32,6 +32,13 @@
 
 lib/core.js.bak-compat-20261024-150122、bin/dsh-purge.js.bak-compat-20261024-150122、cordis.patch.yml.bak-compat-20261024-150122、CHANGELOG-LOCAL.md.bak-compat-20261024-150122。
 
+## 0.0e 目标宿主提到 0.2.1-rc.3（2026-10-24）
+
+- package.json 的 dshTarget 从 0.2.1-rc.2 提到 0.2.1-rc.3（npm 的 next 通道，10-23 发布；latest 仍是 rc.2，桌面 nightly 已经在推 rc.3）
+- rc.3 预检（对 41 个 @deepseek-ai 包解包干跑）：82 条补丁里 61 条锚点仍在、4 条照旧跳过、#88 在新版无锚点（它是 #87 的升级型补丁，属正常）
+- 今天新增的结构型兜底与正则兜底只会提高命中率，不改变上述结论
+- 仍未复核：desktop 壳那几条（#45/#46/#82/#83）改的是安装包里的 app/lib/main.js，npm 上取不到，需要 rc.3 的 main.js 才能比对
+
 ## 0.0d 移植上游两组修复（2026-10-24，版本仍 1.1.72）
 
 只拿“会坏”的两组，限制类与 license 变更一律不拿。
