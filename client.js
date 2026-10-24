@@ -7709,6 +7709,9 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 		}
 
 		function readDrillAuth() {
+			// 界面授权门已移除（2026-10-24）：一律视为已授权。
+			// drill-grant.json 的读写与 /dsh-purge/drill-grant 路由保留，只是不再拦界面。
+			return true;
 			if (drillGrantState.ready) return drillGrantState.granted;
 			try { return window.localStorage.getItem(AUTH_KEY) === "1"; } catch { return false; }
 		}
@@ -7909,6 +7912,8 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 		}
 
 		function AuthGate(props) {
+			// 授权说明页已下线，弹窗不再渲染。
+			return null;
 			const t = useT();
 			const [left, setLeft] = useState(10);
 			const [readEnd, setReadEnd] = useState(false);
