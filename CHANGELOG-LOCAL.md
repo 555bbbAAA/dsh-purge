@@ -32,6 +32,28 @@
 
 lib/core.js.bak-compat-20261024-150122、bin/dsh-purge.js.bak-compat-20261024-150122、cordis.patch.yml.bak-compat-20261024-150122、CHANGELOG-LOCAL.md.bak-compat-20261024-150122。
 
+## 0.0d 移植上游两组修复（2026-10-24，版本仍 1.1.72）
+
+只拿“会坏”的两组，限制类与 license 变更一律不拿。
+
+### 一、停用/卸载后新建会话坏（上游 #108）
+
+- 新增 lib/preset-default.js：clearOwnedSelectedDefault / scheduleClearOwnedSelectedDefault / cancelClearOwnedSelectedDefault / removeStaleAgentPresetDir
+- lib/index.js：enabled:false 时复位 selectedDefault 并删 .agent-presets/redteam；正常启动注册 ctx.effect dispose 钩子，用 800ms 延迟避免热重载误清
+- lib/uninstall.js：卸载时复位 preset、删 stale 目录；bundle 清理同时覆盖顶层与嵌套 dsh.profile.bundles / dsh.profile.plugins
+- lib/redteam/index.js：预设注销时同样触发清理
+
+### 二、0.2.1 上红队预设加载失败
+
+- lib/redteam/tools.js：新增 sealObjectSchemas()，defineTool 包壳递归给 type=object 补 additionalProperties
+- lib/redteam/index.js：installPreset 链路接入 stripToolFilter（复用本仓库已有实现），并在 repaired 记录里标 toolFilter
+
+### 验证
+
+- 七个改动文件全部 node --check 通过
+- 夹具测试：临时 home 下 cordis.patch.yml 与 cordis.yml 里的 selectedDefault: dsh-purge/redteam 均被改写为 standard，stale 预设目录被删除
+- 补丁计数不变：71/82 已清洗，0 待清洗
+
 ## 0.0c 换用自家发布仓库 + 页面新版本通知（2026-10-24）
 
 - 版本源与安装源全部指向 555bbbAAA/dsh-purge（原 YuJunZhiXue/dsh-purge 已无引用）：lib/update.js 的 REPO、package.json 的 repository/homepage/bugs/dsh.install、.github/workflows/release.yml 的仓库判断、README 与 release-notes 的链接
