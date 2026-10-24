@@ -39,7 +39,8 @@
       inject: [systemPrompt, tools]
       config:
         enabled: true
-        autoApplyOnStart: false
+        autoApplyOnStart: true
+        autoUpdatePluginOnHostChange: true
         autoUpdateOnStart: false
         autoRevertOnMissing: false
         injectOnce: false

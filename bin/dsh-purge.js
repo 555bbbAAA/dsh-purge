@@ -26,14 +26,19 @@ function printStatus(state) {
   out.push(`  注入文件       ${state.override_path}`);
   out.push(`  注入状态       ${state.override_status}`);
   out.push("");
-  // 两套口径并存，必须写明，否则 71/82 与面板上的 61/66 会被当成矛盾。
-  // 82 = ALL_PATCHES 完整表；面板把同一批补丁按显示分组折叠后计数，分母更小。
-  const applicable = core.ALL_PATCHES.filter((p) => state.patch_status[p.id] !== "na").length;
+  // 两套口径并存，必须写明，否则完整表与面板折叠数字会被当成矛盾。
+  const located = Boolean(state.ai_base);
+  const applicable = located
+    ? core.ALL_PATCHES.filter((p) => state.patch_status[p.id] !== "na").length
+    : 0;
   out.push(`  补丁 ${state.patches_applied}/${core.ALL_PATCHES.length} 已清洗, ${state.patches_pending} 待清洗`);
-  out.push(`      口径：完整表 ${core.ALL_PATCHES.length} 条，其中 ${applicable} 条在当前布局适用`);
+  out.push(located
+    ? `      口径：完整表 ${core.ALL_PATCHES.length} 条，其中 ${applicable} 条在当前布局适用`
+    : `      口径：完整表 ${core.ALL_PATCHES.length} 条；插件根未定位，补丁状态未知 / state unknown`);
   out.push("      面板与命令行现已同一口径（完整表）；分组数字另存 patches_*_grouped 供折叠视图使用");
   for (const p of core.ALL_PATCHES) {
-    const s = state.patch_status[p.id];
+    // 没定位到插件根时 patch_status 是空的，以前这里会印出一整屏 undefined。
+    const s = located ? (state.patch_status[p.id] || "pending") : "n/a";
     const mark = s === "applied" ? "✓" : s === "pending" ? "✗" : "·";
     out.push(`    ${mark} [#${String(p.id).padEnd(2)}] ${p.name.padEnd(30)} ${p.layer}/${p.layer_en} — ${s}`);
   }
@@ -51,7 +56,7 @@ function printStatus(state) {
 }
 
 async function main() {
-  const mode = args.find((a) => ["--apply", "--revert", "--uninstall", "--status", "--edit", "--swap-asar", "--diag", "--fix-shim", "--help"].includes(a));
+  const mode = args.find((a) => ["--apply", "--revert", "--uninstall", "--status", "--edit", "--swap-asar", "--diag", "--fix-shim", "--repair-baks", "--help"].includes(a));
 
   if (mode === "--help" || args.includes("-h")) {
     console.log(`dsh-purge 用法:
@@ -66,6 +71,8 @@ async function main() {
   dsh-purge --diag       逐条逐文件诊断：为什么这条补丁没打上
                          加 --diag=all 连 applied 的也列出来
   dsh-purge --fix-shim   生成 dsh.cmd / dsh.ps1 到 <DSH_HOME>/bin，解决换包后 CLI 失效
+  dsh-purge --repair-baks 从官方 app.asar 重建已被覆盖的 .dshpurge.bak 基线
+                          默认只出计划；加 --write 才落盘；加 --asar <路径> 指定归档
   dsh-purge --help       帮助`);
     return;
   }
@@ -142,6 +149,14 @@ async function main() {
     }
     console.log("全部完成 / All done。重启 dsh 生效 / Restart dsh to take effect.");
   } else if (mode === "--revert") {
+    // 没定位到插件根时，以前会直接跳过还原却照旧打印「回滚完成」——
+    // 用户以为已经恢复官方文件，实际上宿主还带着补丁。宁可报错。
+    if (!state.ai_base && core.enumeratePatchAiBases().length === 0) {
+      console.log("[ERROR] 找不到插件根，没有可还原的宿主 / no plugin root found");
+      console.log("  fix: 设 DSH_BASE 指向 <安装目录>/resources/app/dsh/node_modules/@deepseek-ai");
+      console.log("       （桌面版通常在 <安装目录>/resources/app/dsh/node_modules/@deepseek-ai）");
+      process.exit(2);
+    }
     if (state.ai_base || core.enumeratePatchAiBases().length) {
       const { reverted, errors } = await core.revertAllHosts();
       for (const p of reverted) console.log(`  ✓ 已还原 / Reverted ${p}`);
@@ -159,6 +174,14 @@ async function main() {
     console.log("回滚完成 / Revert done。重启 dsh 后恢复 / restart to restore.");
     console.log("注: prompt-inject.md 保留（用户文件）/ prompt-inject.md kept (user file)");
   } else if (mode === "--uninstall") {
+    // 找不到宿主就别删插件：uninstallPurge 会把「没检测到补丁」当成未应用，
+    // 删掉插件文件、摘掉 profile 依赖，而宿主里的补丁仍然在，之后连还原入口都没有了。
+    if (!state.ai_base && core.enumeratePatchAiBases().length === 0) {
+      console.log("[ERROR] 找不到插件根，无法确认补丁是否已应用，拒绝卸载 / refuse to uninstall");
+      console.log("  删除插件会连同唯一的还原入口一起消失，宿主里已打的补丁将留在原处。");
+      console.log("  fix: 设 DSH_BASE 指向 <安装目录>/resources/app/dsh/node_modules/@deepseek-ai 后重试");
+      process.exit(2);
+    }
     const { uninstallPurge } = await import("../lib/uninstall.js");
     const result = await uninstallPurge();
     if (result.applied) console.log("  已检测到补丁，已还原回原版。");
@@ -281,6 +304,39 @@ async function main() {
     console.log("");
     console.log("  当前会话临时生效：");
     console.log(`    if (";$env:Path;" -notlike "*;${r.binDir};*") { $env:Path += ";${r.binDir}" }`);
+  } else if (mode === "--repair-baks") {
+    const asarIdx = args.indexOf("--asar");
+    const asarArg = asarIdx >= 0 ? args[asarIdx + 1] : "";
+    const write = args.includes("--write");
+    const { repairBackups } = await import("../lib/repair-baks.js");
+    const report = await repairBackups({ asarPath: asarArg, aiBase: state.ai_base, write });
+    if (!report.ok) {
+      console.log(`[ERROR] ${report.error}`);
+      process.exit(2);
+    }
+    console.log(`  官方归档 / asar   ${report.asar}  ${report.asar_size} 字节`);
+    console.log(`  解包根 / app dir  ${report.app_dir}`);
+    console.log(`  目标文件 / targets ${report.targets}，可重建 ${report.replaceable}`);
+    console.log("");
+    const groups = {};
+    for (const row of report.rows) {
+      (groups[row.action] ||= []).push(row);
+    }
+    const order = ["repaired", "would-repair", "write-failed", "backup-differs-keep", "already-pristine", "current-is-official", "no-backup", "missing-current", "no-archive-entry"];
+    for (const action of order) {
+      const list = groups[action] || [];
+      if (!list.length) continue;
+      console.log(`  ${action}: ${list.length}`);
+      if (action === "repaired" || action === "would-repair" || action === "write-failed") {
+        for (const row of list) console.log(`    · ${row.path}${row.bytes ? `  ${row.bytes}` : ""}${row.detail ? `  ${row.detail}` : ""}`);
+      }
+    }
+    console.log("");
+    if (!write) {
+      console.log("  这是计划，没有写盘。确认后加 --write 真正重建（只写 .dshpurge.bak，正式文件不动）。");
+    } else {
+      console.log(`  已重建 ${report.replaced.length} 个备份。重启 dsh 后回滚/卸载才能还原这些文件。`);
+    }
   } else if (mode === "--edit") {
     const r = core.editOverride(state.dsh_home);
     if (!r.ok && r.needCreate) {
