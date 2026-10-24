@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.80**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.81**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.81（2026-10-24）
+
+- 版本源加 jsDelivr 兜底：`listJsdelivrTags()` 读 `data.jsdelivr.com/v1/package/gh/<repo>` 的 tag 列表，与 GitHub API 的结果合并去重。现场：VM 里 api.github.com 的 tags 接口 403、raw.githubusercontent 超时，于是 tag 列表为空/很旧，自动升级永远认为「没有新版」；jsDelivr 那条路同期返回 master package.json = 1.1.80，可用。
 ## 1.1.80（2026-10-24）
 
 - 自动升级结果落盘：`<DSH_HOME>/dsh-purge/auto-upgrade.json` 记录当次的宿主版本、升级前插件版本、是否 applied、跳过原因、远端候选数、升到哪一版。以前这些只打在宿主控制台里，VM 上根本抓不到，排查只能靠猜。
