@@ -43,3 +43,16 @@ ELECTRON_RUN_AS_NODE=1 "<安装目录>\DeepSeek Harness.exe" "<插件目录>\scr
 - 清洗页改为**页面内嵌**（整块 UI 渲染在插件页里，不再弹窗）；演练台仍走旧浮动面板，入口为页面右上角主色按钮「⚑ 演练台 ↗」。
 - 安装位标准化：`profiles/<profile>/node_modules/<pkg>` 改为真实目录，依赖写 `file:<tarball>`（不再用 Junction 指向源码目录）；tarball 由 `npm pack` 产出。
 - 演练台按钮/页签尺寸统一（min-height 30px、等宽页签、工具条间距 8）。
+
+## 同版本资产指纹更新（v1.2 内新增）
+
+版本号固定在 1.2、用替换 release 资产的方式维护时，原来那条「比本地新的 tag」自动更新永远不会触发。这里补一条独立通路：
+
+1. 宿主版本没变时也会检查（宿主换版仍走原来的 tag 升级）
+2. 取该 tag 的源码包 `codeload.github.com/555bbbAAA/dsh-purge/tar.gz/refs/tags/v1.2`，算 sha256
+3. 与 `<DSH_HOME>\dsh-purge\asset-fingerprint.json` 里记录的指纹比对
+4. 不同 → `tar.exe` 解包覆盖两处插件目录（profile 的 `node_modules\dsh-purge` 与 `.dsh\plugins\dsh-purge`）→ 写新指纹 → 自动重启
+5. 相同 → up-to-date；首次运行只记基线不安装
+6. 6 小时节流（避免每次启动都下整包），失败只写 `%TEMP%\dsh-purge-same-version.log`，不影响启动
+7. 开关：`autoUpdateSameVersionAsset`（默认开）
+

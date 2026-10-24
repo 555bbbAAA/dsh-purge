@@ -45,6 +45,7 @@
         enabled: true
         autoApplyOnStart: true
         autoUpdatePluginOnHostChange: true
+        autoUpdateSameVersionAsset: true
         autoUpdateOnStart: false
         autoRevertOnMissing: false
         injectOnce: false
