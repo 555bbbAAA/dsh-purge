@@ -1,4 +1,4 @@
-# 1.2.1
+# 1.2.2
 
 一句话：把 1.1.81–1.1.125 的全部修复收进一个版本号，重点是「官方更新之后还能正常用」。
 
@@ -59,3 +59,8 @@ ELECTRON_RUN_AS_NODE=1 "<安装目录>\DeepSeek Harness.exe" "<插件目录>\scr
 
 - `/status` 计数矛盾：官方更新后 asar 回到密封态、解包树还没生成时，同一份响应里会出现 `patches_na=76` 与 `patch_counts.pending=76`。现在没有宿主可写时 na=0、全部计入 pending，并给出 `pending_reason: "needs_extract"`。
 - `update.localSha` 显示陈旧提交：从 tarball 安装的插件没有 .git，旧逻辑会回落到 channel.json 里的历史 sha（1.2 曾显示成 ea48268 = v1.1.99）。现在没有 git 信息就留空，界面只按版本号判断。
+## 1.2.2 修的三个问题
+
+- `apply_progress` 卡死：换包转 pending 或宿主重启后仍停在 `phase="swapping"`、`elapsed_ms` 一直涨（实测 70 秒）。现在换包一有结果就收口，超过 10 分钟的残留状态不再回显。
+- `patches_lost` 误报：官方更新后 asar 回到密封态、解包树还在（正在等换包）时误报「补丁已丢失」。现在「树在 + asar 在」判为等换包。
+- 换包后偶发不写 `.dshpurge-unpacked`：preflight 启动时按磁盘事实自愈补写（树在、asar 不在、标记不在 → 补写）。
