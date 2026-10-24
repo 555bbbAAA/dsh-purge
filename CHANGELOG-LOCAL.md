@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.106**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.107**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.107（2026-10-25）
+
+- 修 1.1.106 的两个 shim bug：①`pluginRoot` 算成了 `lib`，导致 shim 里写成 `lib\scripts\prelaunch.mjs`（不存在，prelaunch 根本没跑，日志为空）；②改快捷方式时用了 `process.env.USERPROFILE`，实测被改成 `C:\Users\dshops\Desktop\...`（插件跑在别的账号上下文里），改成按 exe 路径推断真实用户目录。
 ## 1.1.106（2026-10-25）
 
 - 密封态换包改用「启动前 shim」（确定性方案）：插件写出 `<安装目录>\dsh-purge-launch.cmd`，它先用 app 自带的 Electron 跑 `scripts/prelaunch.mjs`（把 `app.asar` 改名成 `.bak`，此时 asar 没被占用），再启动 app；同时把桌面与开始菜单的快捷方式指向这个 cmd。不再依赖 detached spawn / WMI / schtasks / PS1 —— 那六版全卡在「另起进程」上，每次都是调用成功、副作用没有。apply 的返回里 `asar_swap.via` 会写 `launch-shim`。
