@@ -13,7 +13,8 @@
 | 误报「补丁已丢失」 | 重装或回退后必现 | 未初始化不算丢；回退写 `last-revert.json`，30 分钟内抑制，另给 `revert_incomplete` |
 | 换包时弹黑框 | 有 | 观察者与换包助手都改 `wscript //nologo x.vbs`（窗口样式 0），实测无窗 |
 | 插件自身副作用 | 会在桌面/开始菜单投「换包」快捷方式 | 不再投放；preflight 每次启动清旧备份，只留最新 1 个 |
-| 升级方式 | 只认自家 tag | 同左；宿主版本变化时自动拉最新 tag 升级 |
+| 升级方式 | 只认自家 tag | 同左；只装 release 里的 tag，`master` 装不上 |
+| 自动更新 | 无 | **宿主 dsh 版本一变就自升级**：启动时先取一份宿主版本快照，和 `applied.json` 里记录的比；变了就从 GitHub 拉最新 tag → 校验 → 装进 profile 与 `.dsh/plugins` 两处 → 回写版本戳 → 自动重启。远端列表为空时不写戳（避免永久放弃），版本比较按段数值取最高 |
 
 ## 已知限制
 
@@ -26,3 +27,11 @@
 ```powershell
 ELECTRON_RUN_AS_NODE=1 "<安装目录>\DeepSeek Harness.exe" "<插件目录>\scripts\postinstall.mjs"
 ```
+
+## 自动更新怎么工作（1.2 保留并加固）
+
+1. 启动瞬间取宿主版本快照（在自愈改写戳之前），与 `applied.json` 的 `host_version` 比对
+2. 版本变化 → 用 `tags.atom` / `releases.atom` + GitHub API 合并取 tag 列表（API 403 / raw 超时 / jsDelivr 500 都实测过，atom 最稳）
+3. `pickNewestTag()` 按段数值降序取最高版本；本地已最新则不动
+4. 安装到两处目录，回写 `host_version`，记 `auto-upgrade.json`（含 `reason` / `candidate` / `plugin_version_before`），然后自动重启
+5. 开关：`autoUpdatePluginOnHostChange`（默认开）、`autoUpdateOnStart`（默认关）、`autoApplyOnStart`（默认开）
