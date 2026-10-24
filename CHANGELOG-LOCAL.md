@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.90**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.91**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.91（2026-10-24）
+
+- 换包重启会丢环境：观察者 `Start-Process ` 时不再继承启动时的 `DSH_HOME`，换包后新实例会跑回默认 home（换台机器就等于插件不在、面板 404、用户数据也不对）。现在把 `DSH_HOME` 作为 `-DshHome` 传进脚本，重启前显式设回环境变量并写日志。
 ## 1.1.90（2026-10-24）
 
 - 真因：`/dsh-purge/apply` 从来没排过换包。`asar_swap_started` 只是 `shouldRestart && handoff && sealedNow` 算出来的布尔值，而 `core.scheduleSealedDesktopRestart` 全仓库只有 `reapply.js` 调过 —— 所以点「应用」时 if 条件成立、返回值很漂亮，实际既没观察者也没人改名，asar 一直不动、补丁永远不生效。现在 apply 里真的调一次排程，并把结果放进 `asar_swap` 字段。
