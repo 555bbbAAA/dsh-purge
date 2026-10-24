@@ -35,3 +35,4 @@ ELECTRON_RUN_AS_NODE=1 "<安装目录>\DeepSeek Harness.exe" "<插件目录>\scr
 3. `pickNewestTag()` 按段数值降序取最高版本；本地已最新则不动
 4. 安装到两处目录，回写 `host_version`，记 `auto-upgrade.json`（含 `reason` / `candidate` / `plugin_version_before`），然后自动重启
 5. 开关：`autoUpdatePluginOnHostChange`（默认开）、`autoUpdateOnStart`（默认关）、`autoApplyOnStart`（默认开）
+6. 版本 tag 允许两段（`v1.2`）与三段（`v1.2.0`）：1.2 之前只认三段，自家发的 `v1.2` 会被 `isInstallableTag` 拒掉，自动更新永远看不到它

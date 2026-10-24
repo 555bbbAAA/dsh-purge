@@ -162,12 +162,13 @@ await check("备份重建判定分支", async () => {
   return true;
 });
 
-// 10) 升级只认 tag：master 与裸 sha 不可装。
+// 10) 升级只认 tag：master 与裸 sha 不可装。两段版本（v1.2）自 1.2 起允许。
 await check("升级只认 tag", async () => {
   const cases = [
     ["v1.1.72", true], ["1.1.72", true], ["v1.1.78-compat", true], ["v2.0.0-rc.1", true],
+    ["v1.2", true], ["1.2", true],
     ["master", false], ["beta", false], ["main", false],
-    ["c99790cfd836aaf684e71d61a6071ff8c8dd1d25", false], ["v1.1", false], ["../v1.1.72", false],
+    ["c99790cfd836aaf684e71d61a6071ff8c8dd1d25", false], ["v1", false], ["v1.1.71c", false], ["../v1.1.72", false],
   ];
   for (const [ref, want] of cases) {
     const got = updater.isInstallableTag(ref);
