@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.86**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.87**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.87（2026-10-24）
+
+- 自动升级后的重启以前是空操作：调用 `hostctl.scheduleRestart(null, ctx, { openBrowser: false })`，而 `desktop.scheduleRestart` 见到 `openBrowser: false` 直接 return（那条守卫本来是给启动自检用的）。结果 asar 被占用时只挂了个 rename-pending，app 一直不退出，换包永远不落地（VM 实测：upgraded_to 1.1.86、asar_sealed=true、swap_pending=true、进程还是 20:58 那批）。改成不带 `openBrowser: false` 的重启，并在 swap_pending 时也照常重启。
 ## 1.1.86（2026-10-24）
 
 - 修 `auto-upgrade.json` 的 `plugin_version_before` 读取时机：以前是装完之后才读 `localVersion()`，所以永远等于目标版本；改成调 `autoUpgradeForHost` 之前取一次。
