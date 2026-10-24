@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.100**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.101**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.101（2026-10-24）
+
+- 开机不再挡官方更新：`autoApplyOnStart` 在「全新密封安装」上要解包 182MB asar + 打 70 个文件，全是同步重活，撞上 dsh 更新器的「优雅退出」（10 秒 deadline）就会报 `Host did not complete graceful task teardown`。现在启动时的 settle 会先判断两种情况并跳过：①官方更新正在跑（`installer.exe` 在跑或 `dsh-purge-official-restarting` 标记存在）②全新安装（`applied.json` 还没有版本戳）—— 这两种情况下只做「检查更新」，解包打补丁交给用户点「应用」。
 ## 1.1.100（2026-10-24）
 
 - 换包观察者不再和官方更新抢：①占用判断改用「能不能独占打开 app.asar」，不再依赖 Get-Process.Path（跨完整性级别时读不到 Path，会被误判成没占用）；②检测到官方更新在跑（dsh-purge-official-restarting 标记或 installer* / deepseek-harness* 进程）就退让等待，不再动手；③强杀阈值 15 秒 → 45 秒，且只杀 arm 时刻那个 pid，持有者是之后新起的实例就不杀。修的是实测现场：观察者把正在被更新器问话的宿主杀掉，官方更新报 desktop update: task inspection timed out、弹「安装更新失败」。
