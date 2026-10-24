@@ -1,7 +1,12 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.111**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.112**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.112（2026-10-25）
+
+- 修「postinstall 与插件自愈互相拆台」：新增解包模式标记 `resources\.dshpurge-unpacked`（postinstall 写）。`desktopAsarStillSealed()` 见到标记就返回 false，从而不再触发「恢复 asar / 把 app 挪成 app.dshpurge-prev」那套归位逻辑（之前的实测现象：postinstall 改名成功后，启动一次 asar 又被装回来、解包树被改成 `app.dshpurge-prev`）。
+- 标记会随官方更新失效：asar 存在时不视为解包模式（官方更新会把新 asar 写回），此时应重跑一次 postinstall。
+- postinstall 解包前会清掉残留的 `app.dshpurge-prev*` 旧树（长路径用 robocopy 镜像清理）。
 ## 1.1.111（2026-10-25）
 
 - `apply` 不再写任何换包工具/快捷方式：删掉 1.1.109 留下的 `writeSwapHelper` 调用（它会往桌面和开始菜单建「dsh-purge 换包」快捷方式 + `dsh-purge-swap.vbs`），改为在返回值里如实回报 `via: "needs-postinstall"`。换包统一由安装后的 `scripts/postinstall.mjs` 完成，用户侧不再多出任何入口。

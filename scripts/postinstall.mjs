@@ -70,6 +70,16 @@ async function main() {
     log(`dry-run: 会解包 ${asar} -> ${appDir} 然后改名`);
     return 0;
   }
+  // 清掉插件「归位」逻辑留下的旧解包树（app.dshpurge-prev*），避免两份树并存、误判谁在生效
+  try {
+    for (const ent of fs.readdirSync(resources, { withFileTypes: true })) {
+      if (!ent.isDirectory()) continue;
+      if (!/^app\.dshpurge-prev/i.test(ent.name)) continue;
+      const victim = path.join(resources, ent.name);
+      try { fs.rmSync(victim, { recursive: true, force: true }); log(`已清理残留解包树 ${ent.name}`); }
+      catch (e) { log(`清理 ${ent.name} 失败: ${e && (e.message || e)}`); }
+    }
+  } catch { /* ignore */ }
   try {
     fs.mkdirSync(appDir, { recursive: true });
     await extractAsar(asar, appDir);
@@ -104,6 +114,13 @@ async function renameAside(asar, dry) {
     }
   }
   try { fs.rmSync(`${asar}.rename-pending`, { force: true }); } catch { /* ignore */ }
+  // 写「解包模式」标记：插件看到它就不会再把 asar 恢复回来、也不会把 app 目录挪走
+  try {
+    fs.writeFileSync(path.join(resources, ".dshpurge-unpacked"), `${new Date().toISOString()} unpacked by postinstall\n`, "utf8");
+    log("已写标记 .dshpurge-unpacked（插件不会再恢复 asar）");
+  } catch (e) {
+    log(`写标记失败: ${e && (e.message || e)}`);
+  }
   log("完成：以后启动直接读解包树，插件在启动时写补丁即生效");
   return 0;
 }
