@@ -15,7 +15,7 @@
 
 | 宿主 | 状态 |
 | --- | --- |
-| dsh-desktop 0.2.1-rc.3 | 目标版本；npm 侧锚点已预检（61/82 命中、4 条跳过、1 条属版本演进） |
+| dsh-desktop 0.2.1-rc.3 | 目标版本；npm 侧锚点已预检（原 82 条中 61 条命中；5 条已退役、4 条跳过、1 条属版本演进） |
 | dsh-desktop 0.2.1-rc.2 | 兼容 |
 | dsh-desktop 0.2.0 | 兼容 |
 
@@ -29,7 +29,7 @@ dsh plugin add ./dsh-purge-1.1.72.tgz
 
 或解压覆盖 `profile/node_modules/dsh-purge`，然后在面板点一次「应用」。
 
-验证：`dsh-purge --status` 应显示「补丁 71/82 已清洗，0 待清洗」。
+验证：`dsh-purge --status` 应显示「补丁 71/77 已清洗，0 待清洗」（完整表 77 条，其中 71 条在当前布局适用）。
 
 ## 文档
 
