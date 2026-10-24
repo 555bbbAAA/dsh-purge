@@ -1,6 +1,6 @@
 {
   "name": "dsh-purge",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "DeepSeek Harness 本地兼容插件：官方更新后运行时缺件自愈，补丁换包与状态可查。",
   "type": "module",
   "main": "lib/index.js",

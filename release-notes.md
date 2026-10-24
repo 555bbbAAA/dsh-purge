@@ -1,4 +1,4 @@
-# 1.2.2
+# 1.2.3
 
 一句话：把 1.1.81–1.1.125 的全部修复收进一个版本号，重点是「官方更新之后还能正常用」。
 
@@ -64,3 +64,6 @@ ELECTRON_RUN_AS_NODE=1 "<安装目录>\DeepSeek Harness.exe" "<插件目录>\scr
 - `apply_progress` 卡死：换包转 pending 或宿主重启后仍停在 `phase="swapping"`、`elapsed_ms` 一直涨（实测 70 秒）。现在换包一有结果就收口，超过 10 分钟的残留状态不再回显。
 - `patches_lost` 误报：官方更新后 asar 回到密封态、解包树还在（正在等换包）时误报「补丁已丢失」。现在「树在 + asar 在」判为等换包。
 - 换包后偶发不写 `.dshpurge-unpacked`：preflight 启动时按磁盘事实自愈补写（树在、asar 不在、标记不在 → 补写）。
+## 1.2.3
+
+- 再修 `update.localSha`：1.2.1 只去掉了「无 git 时回落到 stamp」，但 `checkUpdate()` 里另有一处 `localRev = gitSha || stamp` 仍把 stamp 当作本版 sha 展示，于是装 1.2.2 却显示 `ea48268`（= v1.1.99）。现在展示用的 sha 必须先与远端列表里「当前版本那一行」对上，对不上就留空；比较逻辑仍用 stamp，不影响更新判断。
