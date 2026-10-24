@@ -2,7 +2,7 @@
  * 把 client.js 改成右侧 dsh-purge 双页签（清洗 + 演练台），并嵌入 vendor 演练台 UI。
  * node scripts/patch-client-dock.mjs
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -14,7 +14,8 @@ const legalPath = join(root, "docs", "drill-auth-legal.html");
 const BEGIN = "/* __DSH_PURGE_DRILL_BEGIN__ */";
 const END = "/* __DSH_PURGE_DRILL_END__ */";
 
-const LEGAL = readFileSync(legalPath, "utf8").trim();
+// 授权说明页已从仓库移除（2026-10-24）；文件不在时留空，构建照常。
+const LEGAL = existsSync(legalPath) ? readFileSync(legalPath, "utf8").trim() : "";
 
 let client = readFileSync(clientPath, "utf8").replace(/\r\n/g, "\n");
 
