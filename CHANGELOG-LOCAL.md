@@ -1,6 +1,13 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.74**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.75**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+
+## 1.1.75（2026-10-24）
+
+- 换包静默失效的真因修掉：`ASAR_RENAME_WHEN_IDLE_PS1` 原先在开工前看 `%TEMP%\dsh-purge-official-restarting`，45 秒内直接 exit 0。那个标记属于「官方更新接管」，与本观察者无关——官方重启的尾巴还在时它就空跑，app.asar 永远不被挪走，于是「补丁写进 resources\app、Electron 仍读归档、面板显示已打却没生效」。已删掉该早退，进程占用判断改成 `-ieq`。
+- 观察者改用 WMI 创建（`launchDetachedViaWmi`）：Electron 主进程带 job object（KILL_ON_JOB_CLOSE），`detached:true` 的子进程会随父进程一起被收掉；而换包观察者恰恰要「等 app 退出才干活」，结果 app 一退它也死了。改由 WmiPrvSE 创建后生命周期与作业对象无关。本机实测：armed 之后父进程退出，10 秒内 app.asar 被改名为 .bak、锁标记清掉。
+- `/dsh-purge/status` 增加 `swap_pending`：`app.asar.rename-pending` 存在即代表「补丁已写、换包未完成」，错配状态可见，不再只靠 `asar_still_sealed` 猜。
+- 新增 `scripts/vm-verify.ps1`：一次性验证脚本（宿主/插件版本、applied·pending·asar_sealed·swap_pending、非 applied 的补丁编号、安装目录 asar 清单、日志尾）。
 
 ## 1.1.74（2026-10-24）
 
