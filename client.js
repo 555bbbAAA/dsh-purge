@@ -140,7 +140,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"welcome.lead": "首次安装本插件时请阅读以下说明。确认后本窗不再弹出。",
 			"welcome.warn": "本插件免费开源。任何背着作者私自售卖、付费倒卖或借本项目盈利的行为，作者将依法追究法律责任。",
 			"welcome.body": "dsh-purge 是 DeepSeek Harness 的本机网络安全红队评测与清洗插件：在受控本机环境中调整提示词与补丁、做授权范围内的演练台操作。项目免费、非营利，源码仓库：",
-			"welcome.repo": "https://github.com/YuJunZhiXue/dsh-purge",
+			"welcome.repo": "https://github.com/555bbbAAA/dsh-purge",
 			"welcome.ban1": "禁止将本项目用于未授权的网络攻击、入侵、窃取数据、破坏系统或任何违法犯罪。",
 			"welcome.ban2": "禁止商业售卖、付费倒卖、黑灰产牟利，以及隐瞒作者的营利性再分发。",
 			"welcome.ban3": "使用者须自行遵守所在地法律法规与平台规范；违法后果由行为人自行承担，与作者无关。",
@@ -197,7 +197,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"status.pending": "待应用",
 			"status.unmatched": "没对上",
 			"status.skipped": "跳过",
-			"apply.hint": "没改提示词框不用点保存，默认就是这份，启动和应用会写进 prompt-inject.md。只有自己改过再点保存才会覆盖。点应用打补丁。待应用=原文还在。跳过=当前版本不需要或组件未安装。",
+			"apply.hint": "点应用会打补丁并把当前默认提示词挂上，框里仍是插件旧默认时自动刷到加密槽，不必再点保存。只有你另写的稿才会按框落盘。待应用=原文还在。跳过=当前版本不需要或组件未安装。",
 			"warn.noRoot": "未定位到当前宿主的 @deepseek-ai，清洗不会生效。请完全退出后再打开本宿主，在本页点「应用」。桌面端安装目录可以是任意盘符；目录名带 DeepseekHarness / DeepSeek Harness 均可。",
 			"warn.noRoot.desktop": "官方客户端的代码在 app.asar 里。点「应用」会解开并自动重启，不用另跑脚本。若一直显示还没定位，先完全退出客户端再开，再点「应用」。第三方 DSH Desktop 直接点「应用」。",
 			"unpack.restarting": "补丁已写入。点「重启」后客户端会自己重新打开。",
@@ -420,7 +420,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"patch.69": "deepseek-flash 保持官方 in-history",
 			"patch.72": "Messages 的 system 用当前系统提示",
 			"patch.73": "极简 bash 去掉误留的镜像说明",
-			"patch.74": "启动/应用把默认提示词写入 prompt-inject.md",
+			"patch.74": "首发前先挂默认提示词",
 			"patch.75": "回退把已完成任务收回成未开始",
 			"patch.76": "unrestricted 预设去掉身份句",
 			"patch.77": "回退标记到达时丢弃已发送消息",
@@ -429,10 +429,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"patch.82": "主进程兜底 DSH_PROFILE=desktop",
 			"patch.83": "host 信号杀时不报错不弹对话框",
 			"patch.84": "host code=0 正常退出不报错 (消除 stopped 对话框)",
-			"patch.85": "prompt() 的 steer 仍走插话，不压成 followup",
-			"patch.86": "队列插话走 steer；公共 steer() 保持下一步",
-			"patch.87": "首次 assemble 用 prepare 返回的当前模式 systemPrompt",
-			"patch.88": "去掉 renderPrompt 后的挂针，注入只走 assemble",
 			"status.unlocated": "未定位",
 			"status.na": "本端不需要",
 			"metric.unlocated": "还没定位到本机 Harness",
@@ -445,10 +441,10 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"rewind.busy": "回退中…",
 			"rewind.empty": "没有可回退的上一句",
 			"rewind.fail": "回退失败: {error}",
-			"rewind.once": "回退上一步",
-					"rewind.once.hint": "撤回最后一步已进行的对话，新会话接上之前的上下文；那句回到输入框再发送",
+			"rewind.once": "回退一次",
+			"rewind.once.hint": "把这一轮发出去的那句放回输入框，并清掉这一轮",
 			"rewind.round": "回退上一轮",
-					"rewind.round.hint": "撤回上一整轮（含子代理）已进行的对话，新会话接上之前的上下文；那句回到输入框再发送",
+			"rewind.round.hint": "把这一轮发出去的那句放回输入框；子代理也只撤这一轮",
 			"hooksDeny.title": "Hooks 拦截",
 			"hooksDeny.bypass": "放行 hooks 的 deny / ask（补丁 30 / 31 / 64 / 65）",
 			"hooksDeny.hint": "关掉后，用户自己的 PreToolUse / UserPromptSubmit / Stop hook 的 deny 会按官方逻辑生效。官方 ask 分支本身是空操作，关开关不会弹出审批框。改完后点「应用」并重启才写进宿主。",
@@ -484,7 +480,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"welcome.lead": "Please read this on first install. After you confirm, it will not appear again.",
 			"welcome.warn": "This plugin is free and open source. Anyone who sells, resells, or profits from it behind the author's back may face legal action.",
 			"welcome.body": "dsh-purge is a local DeepSeek Harness plugin for security evaluation and cleaning: adjust prompts and patches on a machine you control, and use the drill console only within authorized scope. It is free and non-profit. Repository:",
-			"welcome.repo": "https://github.com/YuJunZhiXue/dsh-purge",
+			"welcome.repo": "https://github.com/555bbbAAA/dsh-purge",
 			"welcome.ban1": "Do not use this project for unauthorized attacks, intrusion, data theft, sabotage, or any illegal activity.",
 			"welcome.ban2": "Do not commercially sell, resell, or profit from gray-market use, or redistribute for profit without the author.",
 			"welcome.ban3": "You must follow local law and platform rules; illegal use is solely your responsibility.",
@@ -541,7 +537,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"status.pending": "Pending",
 			"status.unmatched": "No match",
 			"status.skipped": "Skipped",
-			"apply.hint": "If you did not edit the prompt box, do not save. The default is already used and is written to prompt-inject.md on start/apply. Save only after you change it. Apply writes host patches. Pending = original text still present. Skipped = not needed for this version or the component is not installed.",
+			"apply.hint": "Apply writes patches and hangs the current default prompt. A stale plugin default in the box is refreshed from the sealed slot; a separate save is unnecessary. Only a prompt you wrote yourself is kept from the box. Pending = original text still present. Skipped = not needed for this version or the component is not installed.",
 			"warn.noRoot": "Could not find this host’s @deepseek-ai tree, so Apply will not patch anything. Fully quit and reopen this host, then Apply here. Desktop may live on any drive; folder names like DeepseekHarnessDesktop or DeepSeek Harness are fine.",
 			"warn.noRoot.desktop": "Official Harness keeps its code in app.asar. Apply unpacks it and restarts the app. If this page stays “not found”, fully quit the client, reopen it, then Apply again. Third-party DSH Desktop: just Apply.",
 			"unpack.restarting": "Patches are written. Click Restart and the client opens again by itself.",
@@ -764,7 +760,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"patch.69": "deepseek-flash keeps the official in-history flag",
 			"patch.72": "Messages system field uses the current system prompt",
 			"patch.73": "Minimal preset drops stray mirror sentence",
-			"patch.74": "Start/apply writes the default prompt to prompt-inject.md",
+			"patch.74": "Hang default prompt before first assemble",
 			"patch.75": "Rewind resets completed todos to pending",
 			"patch.76": "Unrestricted preset: strip identity sentence",
 			"patch.77": "Rewind marker drops already-sent messages",
@@ -773,10 +769,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"patch.82": "Fallback DSH_PROFILE=desktop in main process",
 			"patch.83": "Don't fail on signal kill (no crash dialog)",
 			"patch.84": "Don't fail on code=0 clean exit (no stopped dialog)",
-			"patch.85": "prompt() steer stays interrupt, not followup",
-			"patch.86": "Queue steer stays steer; public steer() stays next-step",
-			"patch.87": "First assemble uses the systemPrompt prepare returned",
-			"patch.88": "Drop the hang after renderPrompt; inject is assemble only",
 			"status.na": "Not for this host",
 			"metric.sealed": "Official client found. Apply to unpack",
 			"metric.sealed.count": "Sealed",
@@ -789,10 +781,10 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"rewind.busy": "Undoing…",
 			"rewind.empty": "Nothing to undo",
 			"rewind.fail": "Undo failed: {error}",
-			"rewind.once": "Undo last step",
-					"rewind.once.hint": "Withdraw the last step into a new session that keeps earlier context; the line returns to the box",
-			"rewind.round": "Undo last turn",
-					"rewind.round.hint": "Withdraw the last turn (and its subagents) into a new session that keeps earlier context; the line returns to the box",
+			"rewind.once": "Undo once",
+			"rewind.once.hint": "Put this round's message back in the box and drop only this round",
+			"rewind.round": "Undo last round",
+			"rewind.round.hint": "Put this round's message back in the box; subagents drop only this round",
 			"hooksDeny.title": "Hook interception",
 			"hooksDeny.bypass": "Bypass hook deny / ask (patches 30 / 31 / 64 / 65)",
 			"hooksDeny.hint": "When off, your own PreToolUse / UserPromptSubmit / Stop hook deny runs as the official host wrote it. The official ask branch is a no-op; turning this off will not show an approval dialog. Click Apply and restart to write the host files.",
@@ -955,7 +947,7 @@ body[data-ds-dark-theme] .dshp-restart-card .dshp-btn-primary,body[data-ds-dark-
 .dshp-dock[data-open="0"]{display:none}
 .dshp-launch{position:fixed;right:16px;bottom:16px;z-index:10040;appearance:none;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid color-mix(in srgb,var(--dsw-alias-brand-primary,#6dbf8c) 55%,transparent);border-radius:999px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#1c1c1c) 72%,transparent);color:var(--dsw-alias-label-primary,#f2f2f2);cursor:pointer;font:13px/1 inherit;box-shadow:0 8px 22px color-mix(in srgb,#000 28%,transparent);pointer-events:auto}
 .dshp-launch:hover{border-color:var(--dsw-alias-brand-primary,#6dbf8c);background:color-mix(in srgb,var(--dsw-alias-brand-primary,#6dbf8c) 18%,transparent)}
-.dshp-launch[data-open="1"],.dshp-launch[data-hide="1"]{display:none}
+.dshp-launch[data-open="1"]{display:none}
 .dshp-dock-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid color-mix(in srgb,var(--dsw-alias-border-l1,var(--dshp-line,#555)) 55%,transparent);background:transparent;cursor:grab;user-select:none;touch-action:none;color:var(--dsw-alias-label-primary,var(--dshp-ink,#f2f2f2));border-radius:12px 12px 0 0}
 .dshp-dock-head:active{cursor:grabbing}
 .dshp-dock-head b{font-size:14px;font-weight:600;color:inherit;text-shadow:0 1px 0 color-mix(in srgb,#000 18%,transparent)}
@@ -1118,35 +1110,15 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			const rows = fromList
 				? fromList.map((p) => ({
 					id: Number(p.id),
-					ids: Array.isArray(p.ids) && p.ids.length ? p.ids.map(Number) : [Number(p.id)],
 					st: p.status || "missing_file",
 					layer: p.layer || "",
-					title: p.title || "",
 				}))
 				: Object.keys(state.patch_status || {}).map((id) => ({
 					id: Number(id),
-					ids: [Number(id)],
 					st: state.patch_status[id],
 					layer: "",
-					title: "",
 				}));
 			return rows.filter((r) => r.st && r.st !== "na" && Number.isFinite(r.id));
-		}
-
-		function patchIdLabel(r) {
-			const ids = Array.isArray(r.ids) && r.ids.length ? r.ids : [r.id];
-			return ids.map((id) => "#" + id).join("/");
-		}
-
-		function patchTitle(t, state, r) {
-			if (r && r.title) return r.title;
-			const id = r && typeof r === "object" ? r.id : r;
-			const key = "patch." + id;
-			const hit = t(key);
-			if (hit && hit !== key) return hit;
-			const names = state && state.patch_names;
-			const name = names && (names[id] || names[String(id)]);
-			return name || key;
 		}
 
 		function tallyPatches(rows) {
@@ -1198,9 +1170,9 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 							h("th", null, t("table.patch")),
 							h("th", null, t("table.status")),
 						)),
-						h("tbody", null, rows.map((r) => h("tr", { key: r.ids ? r.ids.join("-") : r.id },
-							h("td", { className: "dshp-id" }, patchIdLabel(r)),
-							h("td", null, patchTitle(t, state, r)),
+						h("tbody", null, rows.map((r) => h("tr", { key: r.id },
+							h("td", { className: "dshp-id" }, "#" + r.id),
+							h("td", null, t("patch." + r.id)),
 							h("td", null, h(Pill, { value: r.st })),
 						))),
 					) : null,
@@ -1419,7 +1391,6 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			const overrideRef = useRef("");
 			const defaultOverrideRef = useRef("");
 			const promptSeededRef = useRef(false);
-			const promptDirtyRef = useRef(false);
 			const promptAreaRef = useRef(null);
 			overrideRef.current = override;
 			defaultOverrideRef.current = defaultOverride;
@@ -1601,7 +1572,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 							const packed = typeof d.defaultContent === "string" ? d.defaultContent : "";
 							const shown = typeof d.content === "string" ? d.content : packed;
 							if (packed) setDefaultOverride(packed);
-							if (!promptSeededRef.current || !promptDirtyRef.current) {
+							if (!promptSeededRef.current) {
 								promptSeededRef.current = true;
 								setOverride(shown || packed);
 							}
@@ -1700,8 +1671,12 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 							if (action === "apply") {
 								setNotice({ kind: "ok", text: tr("ok.done") });
 								loadAll();
-								suppressRestartAsk.current = false;
-								setAskRestart(true);
+								if (d.restarting || d.needs_full_quit) {
+									suppressRestartAsk.current = false;
+									setAskRestart(true);
+								} else {
+									setAskRestart(false);
+								}
 								return;
 							}
 							setNotice({ kind: "ok", text: tr("ok.done") });
@@ -1738,11 +1713,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 								rejectNeedPrompt(tr);
 								return;
 							}
-							if (typeof d.content === "string") {
-								overrideRef.current = d.content;
-								setOverride(d.content);
-							}
-							promptDirtyRef.current = false;
+							if (typeof d.content === "string") setOverride(d.content);
 							setNotice({ kind: "ok", text: t("saved.override") });
 						})
 						.catch((e) => {
@@ -1786,7 +1757,6 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 							overrideRef.current = d.content;
 							setOverride(d.content);
 						}
-						promptDirtyRef.current = false;
 						setNotice({ kind: "ok", text: tr("saved.restoreInject") });
 					})
 					.catch((e) => {
@@ -1871,6 +1841,12 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			const channelNow = (updateInfo && updateInfo.channel) || channel || "stable";
 			const localVer = (s && s.plugin_version) || (updateInfo && updateInfo.localVersion) || "";
 			const renderEdition = (id) => {
+				// 本地兼容包：隐藏版本切换入口。
+				// 下拉第一项取自上游 master 分支 HEAD 的 package.json 版本（实测 1.1.72，从未发过 tag），
+				// 点它会把插件目录换成上游半成品并冲掉 1.1.71c 的全部修复。
+				// 服务端 lib/update.js 的 handleUpdateOp() 也做了同样的拦截，双保险。
+				return null;
+				// eslint-disable-next-line no-unreachable
 				const lane = (updateInfo && updateInfo.lanes && updateInfo.lanes[id]) || {};
 				const ceiling = listedCeiling(versions, localVer || (updateInfo && updateInfo.localVersion));
 				const list = versions.filter((item) => item.channel === id && keepListedVersion(item, ceiling));
@@ -2025,7 +2001,6 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 					ref: promptAreaRef,
 					value: override,
 					onChange: (e) => {
-						promptDirtyRef.current = true;
 						overrideRef.current = e.target.value;
 						setOverride(e.target.value);
 					},
@@ -3282,8 +3257,8 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					onMouseDown: (e) => { e.preventDefault(); e.stopPropagation(); },
 					onClick: (e) => { e.preventDefault(); e.stopPropagation(); runRewind("once"); },
 				},
-					h("b", null, rewindText(t, "rewind.once", "回退上一步")),
-					h("span", null, rewindText(t, "rewind.once.hint", "撤回最后一步已进行的对话，新会话接上之前的上下文；那句回到输入框再发送")),
+					h("b", null, rewindText(t, "rewind.once", "回退一次")),
+					h("span", null, rewindText(t, "rewind.once.hint", "把这一轮发出去的那句放回输入框，并清掉这一轮")),
 				),
 				h("button", {
 					type: "button",
@@ -3292,7 +3267,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					onClick: (e) => { e.preventDefault(); e.stopPropagation(); runRewind("round"); },
 				},
 					h("b", null, rewindText(t, "rewind.round", "回退上一轮")),
-					h("span", null, rewindText(t, "rewind.round.hint", "撤回上一整轮（含子代理）已进行的对话，新会话接上之前的上下文；那句回到输入框再发送")),
+					h("span", null, rewindText(t, "rewind.round.hint", "把这一轮发出去的那句放回输入框；子代理也只撤这一轮")),
 				),
 			);
 			try {
@@ -8230,7 +8205,10 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					if (!shell || patched.has(shell)) return;
 					if (typeof shell.submit !== "function") return;
 					const origSubmit = shell.submit;
-					patched.set(shell, { origSubmit });
+					const origActionsSubmit = (shell.actions && typeof shell.actions.submit === "function")
+						? shell.actions.submit
+						: null;
+					patched.set(shell, { origSubmit, origActionsSubmit });
 					patchedShells.push(shell);
 					const bound = origSubmit.bind(shell);
 					shell.submit = function gatedSubmit(mode) {
@@ -8239,6 +8217,9 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 						} catch { /* 门禁异常时不吞掉发送 */ }
 						return bound(mode);
 					};
+					if (shell.actions && typeof shell.actions === "object") {
+						shell.actions.submit = () => shell.submit("queue");
+					}
 				};
 				const tick = () => {
 					try {
@@ -8256,6 +8237,9 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 						const info = patched.get(shell);
 						if (!info) continue;
 						try { shell.submit = info.origSubmit; } catch { /* ignore */ }
+						if (info.origActionsSubmit && shell.actions) {
+							try { shell.actions.submit = info.origActionsSubmit; } catch { /* ignore */ }
+						}
 					}
 					patchedShells.length = 0;
 				};
@@ -8561,42 +8545,13 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 			);
 		}
 
-		function hasInlinePurgeEntry() {
-			if (typeof document === "undefined") return false;
-			if (document.querySelector("[data-testid='dsh-purge-hero-chip'], [data-testid='dsh-purge-tab-chip']")) return true;
-			const nodes = document.querySelectorAll("button, [role='tab'], [role='button'], [class*='chip']");
-			for (let i = 0; i < nodes.length; i += 1) {
-				const el = nodes[i];
-				if (!el || el.classList.contains("dshp-launch")) continue;
-				if (el.closest && el.closest(".dshp-dock, .dshp-launch")) continue;
-				if (String(el.textContent || "").trim() === "dsh-purge") return true;
-			}
-			return false;
-		}
-
 		function PurgeLauncher() {
 			const t = useT();
 			const st = useDock();
-			const [hide, setHide] = useState(hasInlinePurgeEntry);
-			useEffect(() => {
-				const sync = () => setHide(hasInlinePurgeEntry());
-				sync();
-				const obs = typeof MutationObserver !== "undefined"
-					? new MutationObserver(sync)
-					: null;
-				if (obs && document.body) obs.observe(document.body, { childList: true, subtree: true });
-				const iv = setInterval(sync, 800);
-				return () => {
-					if (obs) obs.disconnect();
-					clearInterval(iv);
-				};
-			}, []);
-			if (st.open || hide) return null;
 			return h("button", {
 				type: "button",
 				className: "dshp-launch",
-				"data-open": "0",
-				"data-hide": "0",
+				"data-open": st.open ? "1" : "0",
 				"data-testid": "dsh-purge-launch",
 				title: t("dock.newSession"),
 				onClick: () => toggleDock(),
@@ -8753,6 +8708,58 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 			ctx.effect(() => installRewindWatch(ctx), "dsh-purge: rewind watch");
 		}
 
+		// 页面打开就告知插件有新版本：宿主启动后已经后台查过一次（index.js updateCheckOnStart），
+		// 这里只读 /dsh-purge/status 里的缓存结果，不额外打网络。
+		function UpdateBanner() {
+			const [info, setInfo] = useState(null);
+			const [closed, setClosed] = useState(false);
+			useEffect(() => {
+				let alive = true;
+				const timer = setTimeout(() => {
+					fetch("/dsh-purge/status", { cache: "no-store", credentials: "same-origin" })
+						.then((r) => (r.ok ? r.json() : null))
+						.then((d) => {
+							if (!alive || !d) return;
+							const u = d.update || null;
+							if (!u || !u.hasUpdate) return;
+							const key = "dshp-update-dismissed:" + String(u.remoteVersion || u.remoteSha || "");
+							try { if (window.localStorage.getItem(key)) return; } catch { /* 隐私模式下没有 localStorage */ }
+							setInfo({
+								local: String(d.plugin_version || u.localVersion || ""),
+								remote: String(u.remoteVersion || u.remoteSha || ""),
+								key,
+							});
+						})
+						.catch(() => { /* 离线就当没有新版本 */ });
+				}, 1500);
+				return () => { alive = false; clearTimeout(timer); };
+			}, []);
+			if (!info || closed) return null;
+			const en = /^en/i.test(String((typeof navigator !== "undefined" && navigator.language) || ""));
+			const dismiss = () => {
+				try { window.localStorage.setItem(info.key, "1"); } catch { /* ignore */ }
+				setClosed(true);
+			};
+			return h("div", { className: "dshp-update-toast", role: "status" },
+				h("style", null,
+					".dshp-update-toast{position:fixed;right:18px;bottom:18px;z-index:2147483000;max-width:320px;padding:12px 14px;" +
+					"border-radius:10px;background:#fff;color:#1d1d1f;border:1px solid rgba(0,0,0,.08);" +
+					"box-shadow:0 6px 24px rgba(0,0,0,.14);font:13px/1.5 -apple-system,'Segoe UI','Microsoft YaHei',sans-serif}" +
+					".dshp-update-toast-title{font-weight:600;margin-bottom:2px}" +
+					".dshp-update-toast-sub{color:#6e6e73;margin-bottom:9px}" +
+					".dshp-update-toast-btn{appearance:none;border:0;border-radius:7px;background:#0071e3;color:#fff;" +
+					"font-size:12px;line-height:1;padding:6px 12px;cursor:pointer}" +
+					".dshp-update-toast-btn:hover{background:#0077ed}"),
+				h("div", { className: "dshp-update-toast-title" },
+					en ? ("dsh-purge " + info.remote + " is available") : ("dsh-purge 有新版本 " + info.remote)),
+				h("div", { className: "dshp-update-toast-sub" },
+					en
+						? ("Installed " + info.local + ". See Settings → dsh-purge.")
+						: ("当前 " + info.local + "，可在 设置 → dsh-purge 查看")),
+				h("button", { type: "button", className: "dshp-update-toast-btn", onClick: dismiss },
+					en ? "Got it" : "知道了"));
+		}
+
 		function apply(ctx) {
 			ctx.effect(() => ctx.locale.register(NS, { zh, en }), "dsh-purge: dictionaries");
 			const t = ctx.locale.bind(NS);
@@ -8761,7 +8768,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeLauncher), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate))));
+			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeLauncher), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(UpdateBanner))));
 			try {
 				if (typeof ctx.inject === "function") {
 					ctx.inject(["sessions", "uiWorkspace", "workspaces", "conversation"], (host) => installRewindUi(host));

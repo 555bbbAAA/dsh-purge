@@ -1,6 +1,6 @@
 {
   "name": "dsh-purge",
-  "version": "1.1.71",
+  "version": "1.1.72",
   "description": "DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词；默认提示词面向国模「小码酱」。Jailbreak for every model — swap prompts per model. 求 Star 收藏 ⭐ 如要二开，请查看署名要求部分",
   "type": "module",
   "main": "lib/index.js",
@@ -29,17 +29,16 @@
     "client.js",
     "cordis.patch.yml",
     "screenshots.json",
+    "INSTALL.md",
     "README.md",
     "README.zh-CN.md",
-    "README.en.md",
-    "LICENSE",
-    "LICENSE-COMMERCIAL.md"
+    "LICENSE"
   ],
   "scripts": {
     "embed-prompt": "node scripts/embed-default-prompt.mjs",
     "build:client": "node scripts/build-client.mjs"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "keywords": [
     "dsh",
     "dsh-plugin",
@@ -57,11 +56,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/YuJunZhiXue/dsh-purge.git"
+    "url": "git+https://github.com/555bbbAAA/dsh-purge.git"
   },
-  "homepage": "https://github.com/YuJunZhiXue/dsh-purge#readme",
+  "homepage": "https://github.com/555bbbAAA/dsh-purge#readme",
   "bugs": {
-    "url": "https://github.com/YuJunZhiXue/dsh-purge/issues"
+    "url": "https://github.com/555bbbAAA/dsh-purge/issues"
   },
   "dsh": {
     "bundle": {
@@ -79,9 +78,9 @@
     },
     "install": {
       "preferred": "tarball",
-      "tarball": "https://github.com/YuJunZhiXue/dsh-purge/archive/refs/heads/master.tar.gz",
-      "zip": "https://github.com/YuJunZhiXue/dsh-purge/archive/refs/heads/master.zip",
-      "git": "https://github.com/YuJunZhiXue/dsh-purge.git"
+      "tarball": "https://github.com/555bbbAAA/dsh-purge/archive/refs/heads/master.tar.gz",
+      "zip": "https://github.com/555bbbAAA/dsh-purge/archive/refs/heads/master.zip",
+      "git": "https://github.com/555bbbAAA/dsh-purge.git"
     }
   },
   "publishConfig": {
@@ -93,5 +92,5 @@
   "engines": {
     "node": ">=18"
   },
-  "dshTarget": "0.2.0-rc.2"
+  "dshTarget": "0.2.1-rc.2"
 }

@@ -305,19 +305,15 @@
         toolName: subagent
         modelSelectionSettings: true
         backgroundMode: continuable
-        # 子智能体是角色执行者（信息收集/资产梳理/漏洞发现/漏洞利用/内网渗透），**必须是叶子节点**：
-        # 靠提示词劝"不要再往下委派"是软的——模型完全可以无视。这里直接把委派工具从子会话的
-        # 工具目录里摘掉，子智能体连看都看不到 subagent / subagent_fork / workflow / ralph。
-        # maxDepth 同时收成 1 作为二道保险（默认 3 层太深，会白吃并发预算与上下文）。
+        # 子智能体是角色执行者（信息收集/资产梳理/漏洞发现/漏洞利用/内网渗透），**必须是叶子节点**。
+        # 0.2.1-rc.2 起宿主对 `toolFilter` / `persona` 加了硬拦截：
+        #   for (const field of ["persona", "toolFilter"])
+        #     if (Object.hasOwn(config, field)) throw new Error(`tool-subagent: ${field} is no longer supported; ...`)
+        # 只要键存在就抛错（与值无关），整个预设会注册失败、19 个插件行全部装不上、红队模式在下拉里消失。
+        # 所以叶子约束改由 maxDepth 单独承担：子代理拿不到再下一层，派发链在深度上就断了，效果等价。
+        # 若将来确实需要遮蔽 subagent_fork / workflow / ralph，得走 Agent Preset 的工具插件配置或运行时
+        # tools.restrict()（需要 scoped context），预设 YAML 这条路在 0.2.1 上已经不通。
         maxDepth: 1
-        # 注意：不能 deny `subagent` —— 它是这一行自己注册的 scoped 工具，不在全局工具库里，
-        # 写进 deny 会让 tools.restrict() 校验失败、整个委派路径报 "unknown global tool"（v0.8.0 踩过）。
-        # 子智能体拿不到 subagent_fork/workflow/ralph，加上 maxDepth: 1，实际已无派发能力。
-        toolFilter:
-          deny:
-            - subagent_fork
-            - workflow
-            - ralph
 
     # Fork omits model selection so provider/model stay equal to the parent and
     # the inherited history remains eligible for KV Cache reuse. This preset
