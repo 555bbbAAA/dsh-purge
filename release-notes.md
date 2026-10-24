@@ -2,7 +2,7 @@
 
 ## 中文
 
-社区兼容包，基于上游 1.1.71 维护，目标宿主 dsh-desktop 0.2.1-rc.2（兼容 0.2.0-rc.2）。
+社区兼容包，基于上游 1.1.71 维护，目标宿主 dsh-desktop 0.2.1-rc.3（rc.2 与 0.2.0 仍可用）。
 
 ### 本版改动
 
@@ -23,7 +23,7 @@ dsh plugin add ./dsh-purge-1.1.72.tgz
 
 ## English
 
-Community compatibility build on top of 1.1.71. Target host dsh-desktop 0.2.1-rc.2 (0.2.0 still works).
+Community compatibility build on top of 1.1.71. Target host dsh-desktop 0.2.1-rc.3 (rc.2 and 0.2.0 still work).
 
 ### Changes
 
