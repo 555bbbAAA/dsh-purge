@@ -1,7 +1,7 @@
 {
   "name": "dsh-purge",
   "version": "1.2",
-  "description": "基于上游 1.1.71 维护的 dsh-purge 社区兼容包：只负责 DeepSeek Harness 的版本兼容与本地 Windows 运行问题。Community compatibility build for DeepSeek Harness.",
+  "description": "DeepSeek Harness 本地兼容插件：官方更新后运行时缺件自愈，补丁换包与状态可查。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
