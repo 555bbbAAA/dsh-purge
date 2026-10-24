@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.85**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.86**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.86（2026-10-24）
+
+- 修 `auto-upgrade.json` 的 `plugin_version_before` 读取时机：以前是装完之后才读 `localVersion()`，所以永远等于目标版本；改成调 `autoUpgradeForHost` 之前取一次。
 ## 1.1.85（2026-10-24）
 
 - `auto-upgrade.json` 增加 `candidate`（这次算出来的目标版本）与 `plugin_version_after`，把「算出来要升哪版 / 实际落成哪版」记在一起。
