@@ -1,7 +1,11 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.76**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.77**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.77（2026-10-24）
+
+- 退役 #56 REWIND_HIDE_CUT_ONLY：0.2.1-rc.3 把 rewind 可见性那段代码整体重写了，conversation-client 里既没有 `hidden.add(event.seq)` 也没有 `rewindVisibleEntries`，只剩两段可匹配 —— 强打会把调用插进去而函数不存在。定义留在源码里，补丁表 77→76；VM 上 pending 从 1 归零。
+- 版本自检：tag v1.1.77 内的 package.json version = 1.1.77，release 资产用同一份源码重打。
 ## 1.1.76（2026-10-24）
 
 - 观察者只保留 WMI 一条启动路径：1.1.75 同时用 detached spawn 和 WMI 各起一份，会变成两个观察者抢着改名并各自 Start-Process，可能拉起两个实例。现在只走 WMI，失败时记日志并把 `launchFailed` 带回。
