@@ -99,7 +99,7 @@ node "<插件目录>\bin\dsh-purge.js" --fix-shim
 dsh-purge --status
 ```
 
-应看到「补丁 N/82 已清洗」，以及 `插件根 / root` 指向一个真实路径。
+应看到「补丁 71/77 已清洗，0 待清洗」，以及 `插件根 / root` 指向一个真实路径。
 
 若显示「profile 声明了 dsh-purge 但解析不到」→ 第 3 步没成功，重跑一次。
 
