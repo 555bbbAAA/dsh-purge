@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.105**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.106**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.106（2026-10-25）
+
+- 密封态换包改用「启动前 shim」（确定性方案）：插件写出 `<安装目录>\dsh-purge-launch.cmd`，它先用 app 自带的 Electron 跑 `scripts/prelaunch.mjs`（把 `app.asar` 改名成 `.bak`，此时 asar 没被占用），再启动 app；同时把桌面与开始菜单的快捷方式指向这个 cmd。不再依赖 detached spawn / WMI / schtasks / PS1 —— 那六版全卡在「另起进程」上，每次都是调用成功、副作用没有。apply 的返回里 `asar_swap.via` 会写 `launch-shim`。
 ## 1.1.105（2026-10-25）
 
 - 补上真正的落点：HTTP `/dsh-purge/apply` 里排换包那行（1.1.90 加的）原来调 `core.scheduleSealedDesktopRestart`（只 arm 观察者），现在改成直接调 `desktop.scheduleAsarSwapRestart` 走 PS1/helper（kill Electron → 改名 → 重新拉起），失败才回落 core。1.1.104 只改了命令行那条路径，所以实测仍返回 swap={renamed:false,pending:true}。
