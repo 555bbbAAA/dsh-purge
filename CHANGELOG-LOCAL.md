@@ -1,7 +1,10 @@
 # dsh-purge 更新日志
 
-社区兼容包，当前版本 **1.1.104**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
+社区兼容包，当前版本 **1.1.105**，目标宿主 dsh-desktop **0.2.1-rc.3**。本文件只记录我们这条维护线（1.1.71c 起）的变更。
 
+## 1.1.105（2026-10-25）
+
+- 补上真正的落点：HTTP `/dsh-purge/apply` 里排换包那行（1.1.90 加的）原来调 `core.scheduleSealedDesktopRestart`（只 arm 观察者），现在改成直接调 `desktop.scheduleAsarSwapRestart` 走 PS1/helper（kill Electron → 改名 → 重新拉起），失败才回落 core。1.1.104 只改了命令行那条路径，所以实测仍返回 swap={renamed:false,pending:true}。
 ## 1.1.104（2026-10-25）
 
 - 密封态「应用」后的重启改走 PS1/helper：`scheduleApplyRestart` 直接调 `desktop.scheduleAsarSwapRestart`（先 kill Electron → 改名 → 重新拉起），不再走 `core.restartSealedDesktopIfNeeded` 那条「观察者 + 宿主自己 exit」。实测证据：00:24:40 补丁写完、ename-pending 生成，但 sar-swap.log 没有新记录，00:25:33 又出现 `dsh desktop host stopped` —— 说明宿主是自退被外壳判崩溃，而且外壳活着导致 asar 一直锁着。
