@@ -1150,7 +1150,8 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			const [open, setOpen] = useState({});
 			if (!state || !state.patch_status) return h("div", { className: "dshp-skel", style: { height: 120 } });
 			const located = !!state.ai_base;
-			if (!located) return null;
+			// 2026-10-26：未定位到宿主时不再留白（原来 return null 一片空），给占位骨架
+			if (!located) return h("div", { className: "dshp-skel", style: { height: 96 } });
 			const grouped = new Map();
 			for (const row of patchRowsOf(state)) {
 				const key = LAYER_GROUP[row.layer] || "code";
@@ -1555,11 +1556,19 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 				});
 			}, [channel, pick, postUpdate, updateInfo]);
 
+			const lastStatusJson = useRef("");
 			const loadAll = useCallback(() => {
 				const tr = tRef.current;
 				apiJson("/dsh-purge/status")
 					.then((d) => {
 						if (d && d.ok) {
+							// 2026-10-26：内容没变就不 setState —— 面板每 3 秒轮询一次，
+							// 76 行表格反复重绘正是滚动卡顿的另一个来源。
+							try {
+								const sig = JSON.stringify(d);
+								if (lastStatusJson.current === sig) return;
+								lastStatusJson.current = sig;
+							} catch { /* 序列化失败就照常更新 */ }
 							setState(d);
 							if (d.apply_progress && d.apply_progress.phase) busyPhaseKey.current = "apply.phase." + d.apply_progress.phase;
 							if (d.channel) setChannel(d.channel);
@@ -1613,9 +1622,27 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			}, []);
 
 			useEffect(() => {
-				loadAll();
-				const timer = setTimeout(() => { loadAll(); }, 5000);
-				return () => clearTimeout(timer);
+				// 2026-10-26：首次打开时宿主可能还没初始化完，原来只重试一次（5 秒后）→ 补丁区空白几秒。
+				// 现在前 3 秒每 600ms 追一次，之后 2 秒一次，最多 12 次。
+				let alive = true;
+				let n = 0;
+				const timers = [];
+				// 2026-10-26：先拿 lite（顶部数字+状态，几十毫秒），把界面立刻画出来；
+				// 随后照旧拉全量补丁表 —— 观感不变，只是不再空等。
+				const loadLite = () => {
+					apiJson("/dsh-purge/status?lite=1")
+						.then((d) => { if (alive && d && d.ok && d.lite) setState((prev) => Object.assign({}, prev, d)); })
+						.catch(() => {});
+				};
+				const kick = () => {
+					if (!alive) return;
+					if (n === 0) loadLite();
+					loadAll();
+					n += 1;
+					if (n < 12) timers.push(setTimeout(kick, n <= 5 ? 600 : 2000));
+				};
+				kick();
+				return () => { alive = false; timers.forEach((x) => clearTimeout(x)); };
 			}, [loadAll]);
 
 			const rejectNeedPrompt = useCallback((tr) => {
@@ -3220,7 +3247,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 						.catch(() => {});
 				};
 				tick();
-				const timer = window.setInterval(tick, 1200);
+				const timer = window.setInterval(tick, 3000);
 				return () => {
 					cancelled = true;
 					window.clearInterval(timer);
@@ -3508,7 +3535,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					scheduleComposerFill(data.sessionId, text);
 				} catch { /* ignore */ }
 			};
-			const timer = window.setInterval(tick, 1200);
+			const timer = window.setInterval(tick, 3000);
 			return () => window.clearInterval(timer);
 		}
 
@@ -8239,7 +8266,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					} catch { /* ignore */ }
 				};
 				tick();
-				const iv = window.setInterval(tick, 400);
+				const iv = window.setInterval(tick, 1200);
 				return () => {
 					window.clearInterval(iv);
 					for (const shell of patchedShells) {
@@ -8371,7 +8398,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				const obs = new MutationObserver(sync);
 				if (document.body) obs.observe(document.body, { attributes: true, attributeFilter: ["data-ds-dark-theme", "class", "style"] });
 				obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-ds-dark-theme", "class", "style"] });
-				const timer = window.setInterval(sync, 1500);
+				const timer = window.setInterval(sync, 5000);
 				return () => { obs.disconnect(); window.clearInterval(timer); };
 			}, []);
 			useEffect(() => {
@@ -8606,7 +8633,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					? new MutationObserver(() => ensure())
 					: null;
 				if (obs) obs.observe(document.body, { childList: true, subtree: true });
-				const iv = setInterval(ensure, 1000);
+				const iv = setInterval(ensure, 3000);
 				return () => {
 					dead = true;
 					if (obs) obs.disconnect();
@@ -8669,7 +8696,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					? new MutationObserver(() => ensure())
 					: null;
 				if (obs) obs.observe(document.body, { childList: true, subtree: true });
-				const iv = setInterval(ensure, 1000);
+				const iv = setInterval(ensure, 3000);
 				return () => {
 					dead = true;
 					if (obs) obs.disconnect();
