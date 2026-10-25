@@ -264,6 +264,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"ok.done": "已完成",
 			"err.action": "失败: {error}",
 			"err.status": "读取失败: {error}",
+			"status.busy": "处理中…正在解包 / 换包，完成后会自动刷新，请勿关闭窗口",
 			"err.override": "读取失败: {error}",
 			"err.rules": "读取失败: {error}",
 			"err.read": "读取失败: {error}",
@@ -604,6 +605,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"ok.done": "Done",
 			"err.action": "Failed: {error}",
 			"err.status": "Read failed: {error}",
+			"status.busy": "Working… unpacking / swapping; the page refreshes itself when done",
 			"err.override": "Read failed: {error}",
 			"err.rules": "Read failed: {error}",
 			"err.read": "Read failed: {error}",
@@ -1463,6 +1465,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			}, [applyUpdateInfo]);
 
 			const postUpdate = useCallback((body, kind, id) => {
+				applyWindowUntil = Date.now() + 5 * 60 * 1000; // 最多 5 分钟内把断连当「处理中」
 				setUpdateBusy(true);
 				setUpdateJob({ id: id || "", kind });
 				const tr = tRef.current;
@@ -1559,6 +1562,11 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 						}
 					})
 					.catch((e) => {
+						if (inApplyWindow() || restartOnce) {
+							setNotice({ kind: "ok", text: tr("status.busy") });
+							setTimeout(loadAll, 2000);
+							return;
+						}
 						setState({ ok: false, patches_total: 0, patches_applied: 0, patch_status: {}, shim_cmd: "n/a", shim_ps1: "n/a", shim_bin: "n/a", has_backup: false });
 						setNotice({ kind: "error", text: tr("err.status", { error: e.message }) });
 					});
@@ -2729,6 +2737,10 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 		}
 
 		let restartOnce = false;
+		// apply/换包期间（含解包与重启）会短暂断连：这段时间内的 status 读取失败
+		// 不能当成错误弹「读取失败」，否则用户看到的就是「处理中→读取错误→又好了」。
+		let applyWindowUntil = 0;
+		function inApplyWindow() { return Date.now() < applyWindowUntil; }
 
 		function restartDsh(setNotice, setBusy, t, surface) {
 			if (restartOnce) return;
