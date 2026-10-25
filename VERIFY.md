@@ -101,3 +101,16 @@ Get-Content $stamp -Raw
 | 自动升级结果 | `<DSH_HOME>\dsh-purge\auto-upgrade.json` |
 | 补丁戳 | `<DSH_HOME>\dsh-purge\applied.json` |
 | 宿主崩溃日志 | `%APPDATA%\@deepseek-ai\dsh-desktop\logs\crash-*.log` |
+
+
+## 自带运行时的来源
+
+`assets/runtime-min/bin/node` 是官方 Node.js 官方发行版的 `node.exe`（用于在宿主之外补 runtime、跑 preflight 辅助脚本），
+随包分发，无法审计。核对方式：
+
+```powershell
+Get-FileHash "<插件目录>\assets\runtime-min\bin\node" -Algorithm SHA256
+# 期望：70e7283062bf127839ed8318e03f7c61e807bd1f257bcc12cfde896aa3395a09
+```
+
+它只被 `scripts/runtime-guard.ps1` 与 preflight 的补齐流程使用，不参与补丁打点与宿主改写。
