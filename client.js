@@ -265,6 +265,9 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"err.action": "失败: {error}",
 			"err.status": "读取失败: {error}",
 			"status.busy": "处理中…正在解包 / 换包，完成后会自动刷新，请勿关闭窗口",
+			"apply.phase.extracting": "处理中…正在解包宿主（约 40~90 秒），完成后会自动刷新",
+			"apply.phase.patching": "处理中…正在写补丁，马上就好",
+			"apply.phase.swapping": "处理中…正在换包并重启，页面会自己回来",
 			"err.override": "读取失败: {error}",
 			"err.rules": "读取失败: {error}",
 			"err.read": "读取失败: {error}",
@@ -606,6 +609,9 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"err.action": "Failed: {error}",
 			"err.status": "Read failed: {error}",
 			"status.busy": "Working… unpacking / swapping; the page refreshes itself when done",
+			"apply.phase.extracting": "Working… unpacking the host (about 40-90s)",
+			"apply.phase.patching": "Working… writing patches",
+			"apply.phase.swapping": "Working… swapping and restarting",
 			"err.override": "Read failed: {error}",
 			"err.rules": "Read failed: {error}",
 			"err.read": "Read failed: {error}",
@@ -1386,6 +1392,8 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			const [updateJob, setUpdateJob] = useState(null);
 			const [askRestart, setAskRestart] = useState(false);
 			const suppressRestartAsk = useRef(false);
+			// U3：把 apply 的阶段（解包 / 打补丁 / 换包）反映到「处理中」文案上
+			const busyPhaseKey = useRef("status.busy");
 			const [askUninstall, setAskUninstall] = useState(false);
 			const [uninstallBusy, setUninstallBusy] = useState(false);
 			const [notice, setNotice] = useState({ kind: "idle", text: "" });
@@ -1553,6 +1561,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 					.then((d) => {
 						if (d && d.ok) {
 							setState(d);
+							if (d.apply_progress && d.apply_progress.phase) busyPhaseKey.current = "apply.phase." + d.apply_progress.phase;
 							if (d.channel) setChannel(d.channel);
 							if (d.update && d.update.ok && !d.update.error) setUpdateInfo(d.update);
 							if (d.boot_full_quit && !suppressRestartAsk.current) setAskRestart(true);
@@ -1563,7 +1572,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 					})
 					.catch((e) => {
 						if (inApplyWindow() || restartOnce) {
-							setNotice({ kind: "ok", text: tr("status.busy") });
+							setNotice({ kind: "ok", text: tr(busyPhaseKey.current || "status.busy") });
 							setTimeout(loadAll, 2000);
 							return;
 						}
@@ -1927,6 +1936,14 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 					h("div", { className: "dshp-now" },
 						h("span", { className: "dshp-now-label" }, t("channel.local")),
 						h("b", { className: "dshp-now-ver" }, localVer ? "v" + localVer : "—"),
+						// U5：宿主真实版本就显示在插件版本右边（安装器不写注册表 DisplayVersion）
+						s && s.host_version_real && String(s.host_version_real) !== String(localVer)
+							? h("span", {
+								className: "dshp-pill",
+								title: "宿主真实版本（注册表 DisplayVersion 不随安装器更新）",
+								style: { marginLeft: 8 },
+							}, "宿主 " + String(s.host_version_real))
+							: null,
 						h("em", { className: "dshp-now-mark" }, t("update.current")),
 					),
 					h("div", { className: "dshp-editions" },
@@ -8815,6 +8832,9 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				return () => { alive = false; };
 			}, [st.open]);
 			const version = info && info.plugin_version ? String(info.plugin_version) : "";
+			// U5：安装器不重写注册表 DisplayVersion，宿主真实版本以 host_version_real 为准
+			const hostVersionReal = info && info.host_version_real ? String(info.host_version_real) : "";
+			const hostLabel = hostVersionReal ? "宿主 " + hostVersionReal : "";
 			const sealed = info ? Boolean(info.asar_still_sealed) : false;
 			const applied = info ? (info.patches_applied ?? 0) : 0;
 			const total = info ? (info.patches_total ?? 0) : 0;
@@ -8836,6 +8856,9 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				h("div", { style: row },
 					h("b", { style: { fontSize: 14 } }, "dsh-purge"),
 					version ? h("span", { style: badge }, "v" + version) : null,
+					hostVersionReal && hostVersionReal !== version
+						? h("span", { style: badge, title: "宿主真实版本（注册表 DisplayVersion 不随安装器更新）" }, hostVersionReal)
+						: null,
 					sealed ? h("span", { style: badge }, translate ? translate("dock.unauthorized") : "sealed") : null),
 				h("p", { style: hint },
 					info
