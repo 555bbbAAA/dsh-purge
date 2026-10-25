@@ -1,4 +1,4 @@
-﻿# dsh runtime 守卫（1.2.16）
+﻿# dsh runtime 守卫（1.3）
 # 在「宿主启动之前」把 resources\runtime 补齐 —— 不依赖 dsh-purge 是否被 bundles 加载。
 # 官方安装器/更新器有时会把 resources\runtime 清空（目录还在、0 个条目），
 # 而 dsh-base 加载 dsh-skill-office 时就要读 runtime\office-skills\office\SKILL.md，
@@ -16,8 +16,8 @@ $logPath = Join-Path $env:TEMP 'dsh-purge-runtime-guard.log'
 function W($m) { try { Add-Content -LiteralPath $logPath -Value ($stamp + ' ' + $m) -Encoding UTF8 } catch {} }
 
 function Find-InstallDir {
-  # 测试用覆盖
-  if ($env:DSH_PURGE_INSTALL_DIR) { return $env:DSH_PURGE_INSTALL_DIR }
+  # 测试钩子：必须同时设 DSH_PURGE_ALLOW_OVERRIDE=1 才生效，避免生产环境被环境变量劫持
+  if ($env:DSH_PURGE_ALLOW_OVERRIDE -eq '1' -and $env:DSH_PURGE_INSTALL_DIR) { return $env:DSH_PURGE_INSTALL_DIR }
   foreach ($root in @('HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall',
                       'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall')) {
     try {
