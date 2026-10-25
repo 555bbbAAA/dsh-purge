@@ -264,6 +264,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"ok.done": "已完成",
 			"err.action": "失败: {error}",
 			"err.status": "读取失败: {error}",
+			"update.installing": "正在安装更新，请稍候再启动 dsh（现在启动会打断安装）",
 			"status.busy": "处理中…正在解包 / 换包，完成后会自动刷新，请勿关闭窗口",
 			"err.override": "读取失败: {error}",
 			"err.rules": "读取失败: {error}",
@@ -605,6 +606,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"ok.done": "Done",
 			"err.action": "Failed: {error}",
 			"err.status": "Read failed: {error}",
+			"update.installing": "Update is being installed. Wait before starting dsh again.",
 			"status.busy": "Working… unpacking / swapping; the page refreshes itself when done",
 			"err.override": "Read failed: {error}",
 			"err.rules": "Read failed: {error}",
@@ -1556,6 +1558,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 							if (d.channel) setChannel(d.channel);
 							if (d.update && d.update.ok && !d.update.error) setUpdateInfo(d.update);
 							if (d.boot_full_quit && !suppressRestartAsk.current) setAskRestart(true);
+						if (d.update_installing) setNotice({ kind: "ok", text: tr("update.installing") });
 						} else {
 							setState({ ok: false, patches_total: 0, patches_applied: 0, patch_status: {}, shim_cmd: "n/a", shim_ps1: "n/a", shim_bin: "n/a", has_backup: false });
 							setNotice({ kind: "error", text: tr("err.status", { error: (d && d.error) || "bad response" }) });
