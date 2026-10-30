@@ -34,18 +34,29 @@ jobs:
           set -euo pipefail
           version="$(node -p "require('./package.json').version")"
           tag="v${version}"
+
+          # 幂等：release 已存在就跳过，不重发、不覆盖。
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "already published: $tag"
+            echo "::notice::release ${tag} already exists, nothing to do"
             exit 0
           fi
+
+          # 本仓库靠 GitHub contents API 逐文件推送（git push 长期 502），一次发版
+          # 会落成好几个 commit，中间态必然出现「package.json 已是新版、
+          # release-notes.md 还是旧版」这种半截状态。那不是错误，等后续 commit
+          # 把两者补齐即可 —— 所以这里跳过而不是失败，避免刷一屏红色 Run failed。
+          # 先去掉可能的 UTF-8 BOM 与 CRLF，否则首行比对会被 BOM 带偏。
           first="$(head -n 1 release-notes.md | tr -d '\r')"
+          first="${first#$'\xef\xbb\xbf'}"
           if [ "$first" != "# ${version}" ]; then
-            echo "release-notes first line must be # ${version}, got: ${first}"
-            exit 1
+            echo "::notice::package.json=${version} but release-notes.md starts with '${first}' — partial push in progress, skipping until they agree"
+            exit 0
           fi
+
           zip="dsh-purge-${version}.zip"
           git archive --format=zip --prefix="dsh-purge-${version}/" --output="$zip" HEAD
-          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file release-notes.md
           test -s "$zip"
+
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file release-notes.md
           gh release upload "$tag" "$zip" --clobber
           echo "published https://github.com/555bbbAAA/dsh-purge/releases/tag/${tag}"
