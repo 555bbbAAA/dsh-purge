@@ -1148,15 +1148,29 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 		function PatchGroups({ state }) {
 			const t = useT();
 			const [open, setOpen] = useState({});
+			// 2026-10-30：面板每 3 秒轮询一次，每次都会把整棵分组树重建一遍。
+			// 分组默认折叠，所以行 DOM 不是大头，真正白花的是「每次都重新分组 + 排序 + 算 tally」。
+			// 这里按「补丁状态签名」缓存分组结果：状态没变就直接复用上一次的 grouped。
+			const groupedRef = useRef(null);
+			const groupedSigRef = useRef("");
 			if (!state || !state.patch_status) return h("div", { className: "dshp-skel", style: { height: 120 } });
 			const located = !!state.ai_base;
 			// 2026-10-26：未定位到宿主时不再留白（原来 return null 一片空），给占位骨架
 			if (!located) return h("div", { className: "dshp-skel", style: { height: 96 } });
-			const grouped = new Map();
-			for (const row of patchRowsOf(state)) {
-				const key = LAYER_GROUP[row.layer] || "code";
-				if (!grouped.has(key)) grouped.set(key, []);
-				grouped.get(key).push(row);
+			let sig = "";
+			try {
+				sig = JSON.stringify(state.patch_status) + "|" + (Array.isArray(state.patches) ? state.patches.length : 0);
+			} catch { sig = ""; }
+			let grouped = groupedRef.current;
+			if (!grouped || groupedSigRef.current !== sig) {
+				grouped = new Map();
+				for (const row of patchRowsOf(state)) {
+					const key = LAYER_GROUP[row.layer] || "code";
+					if (!grouped.has(key)) grouped.set(key, []);
+					grouped.get(key).push(row);
+				}
+				groupedRef.current = grouped;
+				groupedSigRef.current = sig;
 			}
 			return GROUP_ORDER.filter((key) => grouped.has(key)).map((key) => {
 				const rows = grouped.get(key).slice().sort((a, b) => a.id - b.id);
@@ -1519,7 +1533,11 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 
 			const doUpdate = useCallback((id) => {
 				const lane = id === "beta" ? "beta" : "stable";
-				postUpdate({ op: "apply", ref: lane === "beta" ? "beta" : "master", channel: lane }, "done", id).catch(() => {});
+				// 2026-10-26：目标 ref 优先用「远端版本号对应的 tag」，没有才退回通道 ref。
+				// 拿不到 tag 列表的机器上也能装到确定的版本，而不是 master。
+				const remoteVer = updateInfo && updateInfo.remoteVersion ? String(updateInfo.remoteVersion).replace(/^v/i, "") : "";
+				const wantRef = remoteVer ? "v" + remoteVer : (lane === "beta" ? "beta" : "master");
+				postUpdate({ op: "apply", ref: wantRef, channel: lane }, "done", id).catch(() => {});
 			}, [postUpdate]);
 
 			const changeChannel = useCallback((next) => {
@@ -1557,6 +1575,11 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			}, [channel, pick, postUpdate, updateInfo]);
 
 			const lastStatusJson = useRef("");
+			// 2026-10-30：首轮一次性请求的去重标记。loadAll 打开面板时会被连调 12 轮，
+			// update（发网络）/ override（68 KB）/ own-servers 只需首轮拿到一次。
+			const updateFetchedRef = useRef(false);
+			const overrideLoadedRef = useRef(false);
+			const ownServersFetchedRef = useRef(false);
 			const loadAll = useCallback(() => {
 				const tr = tRef.current;
 				apiJson("/dsh-purge/status")
@@ -1588,42 +1611,55 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 						setState({ ok: false, patches_total: 0, patches_applied: 0, patch_status: {}, shim_cmd: "n/a", shim_ps1: "n/a", shim_bin: "n/a", has_backup: false });
 						setNotice({ kind: "error", text: tr("err.status", { error: e.message }) });
 					});
-				apiJson("/dsh-purge/update")
-					.then((d) => {
-						if (!d) return;
-						if (d.channel) setChannel(d.channel);
-						setUpdateInfo(d);
-						syncPicks(d);
-					})
-					.catch(() => {});
-				apiJson("/dsh-purge/override")
-					.then((d) => {
-						if (d && d.ok) {
-							const packed = typeof d.defaultContent === "string" ? d.defaultContent : "";
-							const shown = typeof d.content === "string" ? d.content : packed;
-							if (packed) setDefaultOverride(packed);
-							if (!promptSeededRef.current) {
-								promptSeededRef.current = true;
-								setOverride(shown || packed);
+				// 2026-10-30：打开面板会连发 12 轮 loadAll，而 /update 是唯一要发网络的
+				// （去 GitHub 查 tag，冷启动 2.7 秒），/override 是 68 KB 的提示词正文。
+				// 这两样只在首轮拉，之后靠面板里的手动刷新；省掉 11 次 GitHub 查询与约 750 KB。
+				if (!updateFetchedRef.current) {
+					updateFetchedRef.current = true;
+					apiJson("/dsh-purge/update")
+						.then((d) => {
+							if (!d) return;
+							if (d.channel) setChannel(d.channel);
+							setUpdateInfo(d);
+							syncPicks(d);
+						})
+						.catch(() => { updateFetchedRef.current = false; });
+				}
+				if (!overrideLoadedRef.current) {
+					apiJson("/dsh-purge/override")
+						.then((d) => {
+							if (d && d.ok) {
+								const packed = typeof d.defaultContent === "string" ? d.defaultContent : "";
+								const shown = typeof d.content === "string" ? d.content : packed;
+								if (packed) setDefaultOverride(packed);
+								if (!promptSeededRef.current) {
+									promptSeededRef.current = true;
+									setOverride(shown || packed);
+								}
+								setOverrideLoaded(true);
+								overrideLoadedRef.current = true;
 							}
-							setOverrideLoaded(true);
-						}
-						else setNotice({ kind: "error", text: tr("err.override", { error: (d && d.error) || "" }) });
-					})
-					.catch((e) => setNotice({ kind: "error", text: tr("err.override", { error: e.message }) }));
-				apiJson("/dsh-purge/own-servers")
-					.then((d) => {
-						if (d && d.ok) {
-							setOwnServers(typeof d.content === "string" ? d.content : "");
-							setOwnLoaded(true);
-						}
-					})
-					.catch(() => {});
+							else setNotice({ kind: "error", text: tr("err.override", { error: (d && d.error) || "" }) });
+						})
+						.catch((e) => setNotice({ kind: "error", text: tr("err.override", { error: e.message }) }));
+				}
+				if (!ownServersFetchedRef.current) {
+					ownServersFetchedRef.current = true;
+					apiJson("/dsh-purge/own-servers")
+						.then((d) => {
+							if (d && d.ok) {
+								setOwnServers(typeof d.content === "string" ? d.content : "");
+								setOwnLoaded(true);
+							}
+						})
+						.catch(() => { ownServersFetchedRef.current = false; });
+				}
 			}, []);
 
 			useEffect(() => {
 				// 2026-10-26：首次打开时宿主可能还没初始化完，原来只重试一次（5 秒后）→ 补丁区空白几秒。
-				// 现在前 3 秒每 600ms 追一次，之后 2 秒一次，最多 12 次。
+				// 2026-10-30：实测 12 轮太重（12 × 4 接口 ≈ 48 次请求 / 1.07 MB，4 GB 的 VM 上明显卡）。
+				// 降到 6 轮：前 3 轮 600ms 覆盖宿主慢启动，后 3 轮 2 秒兜底；再多也基本是重复数据。
 				let alive = true;
 				let n = 0;
 				const timers = [];
@@ -1639,7 +1675,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 					if (n === 0) loadLite();
 					loadAll();
 					n += 1;
-					if (n < 12) timers.push(setTimeout(kick, n <= 5 ? 600 : 2000));
+					if (n < 6) timers.push(setTimeout(kick, n <= 3 ? 600 : 2000));
 				};
 				kick();
 				return () => { alive = false; timers.forEach((x) => clearTimeout(x)); };
@@ -1954,6 +1990,19 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 					h(Btn, { tiny: true, kind: actionKind, disabled: actionDisabled, onClick: actionClick }, actionLabel),
 				);
 			};
+			// 2026-10-26（Royan 要求）：把「有新版本」提示与更新按钮直接放在面板版本号旁边。
+			// 1.3 精简入口时删掉了浮动的 UpdateBanner，结果有更新也没人看得见。
+			const updateRemote = updateInfo && updateInfo.hasUpdate && updateInfo.remoteVersion ? String(updateInfo.remoteVersion) : "";
+			const updChip = updateRemote && updateRemote !== String(localVer)
+				? h(Btn, {
+					tiny: true,
+					kind: "primary",
+					disabled: updateBusy,
+					style: { marginLeft: 8 },
+					title: t("update.available", { remote: "v" + updateRemote, local: localVer ? "v" + localVer : "—" }),
+					onClick: () => doUpdate(channelNow === "beta" ? "beta" : "stable"),
+				}, (updateBusy ? t("btn.doUpdate.busy") : t("btn.doUpdate")) + " v" + updateRemote)
+				: null;
 			return h("section", { className: "dshp-panel", "aria-label": t("purge.title") },
 				h("div", { className: "dshp-head" },
 					h("h3", { className: "dshp-title" }, t("purge.title")),
@@ -1963,6 +2012,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 					h("div", { className: "dshp-now" },
 						h("span", { className: "dshp-now-label" }, t("channel.local")),
 						h("b", { className: "dshp-now-ver" }, localVer ? "v" + localVer : "—"),
+						updChip,
 						// U5：宿主真实版本就显示在插件版本右边（安装器不写注册表 DisplayVersion）
 						s && s.host_version_real && String(s.host_version_real) !== String(localVer)
 							? h("span", {
@@ -8544,7 +8594,8 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					h("button", { type: "button", onClick: () => setDock({ open: false, authOpen: false, tab: "clean", pending: "tab" }) }, t("dock.close")),
 				),
 				h("div", { className: "dshp-dock-tabs", role: "tablist" },
-					h("button", {
+					// 2026-10-26 (Royan): drill panel must not show the clean tab
+					st.tab === "drill" ? null : h("button", {
 						type: "button",
 						className: "dshp-dock-tab" + (st.tab === "clean" ? " on" : ""),
 						role: "tab",
@@ -8826,7 +8877,8 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				: h("div", { style: { padding: 16, color: "var(--dsw-alias-label-secondary, #b8b4ac)" } }, "演练台模块未加载");
 			// 只有「清洗」内嵌在页面里；「演练台」仍走旧的浮动面板（点按钮弹出）。
 			const drillOpen = () => {
-				try { setDock({ open: true, tab: "drill", authOpen: false, pending: "tab" }); } catch { /* ignore */ }
+				// route through requestDrill for auth
+				try { requestDrill("tab"); } catch { try { setDock({ open: true, tab: "drill", authOpen: false, pending: "tab" }); } catch { /* ignore */ } }
 			};
 			// 演练台入口做成显眼的主色实心按钮（Royan：要明显的按钮）
 			const drillBtn = {
@@ -8852,7 +8904,10 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 			const [info, setInfo] = useState(null);
 			useEffect(() => {
 				let alive = true;
-				fetch("/dsh-purge/status", { headers: { accept: "application/json" } })
+				// 2026-10-30：这一节只用 plugin_version / host_version_real / asar_still_sealed /
+				// patches_applied / patches_total，lite 全都有（315 字节）；原来拉全量 19 KB，
+				// 而每次面板开合都会触发一次。
+				fetch("/dsh-purge/status?lite=1", { headers: { accept: "application/json" } })
 					.then((r) => (r.ok ? r.json() : null))
 					.then((d) => { if (alive) setInfo(d); })
 					.catch(() => { /* 状态取不到不影响入口 */ });
