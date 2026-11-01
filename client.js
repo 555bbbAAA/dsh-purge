@@ -133,7 +133,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"dock.newSession": "dsh-purge",
 			"dock.inSession": "dsh-purge",
 			"dock.redteam": "红队模式",
-			"dock.full": "全面浏览",
 			"dock.close": "收起",
 			"dock.unauthorized": "未授权",
 			"welcome.title": "用户须知",
@@ -148,7 +147,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"welcome.check": "我已阅读并理解上述用户须知，同意合法合规使用。",
 			"welcome.ok": "我已知晓并继续",
 			"auth.title": "演练台授权确认",
-			"auth.lead": "清洗不需要这一步。第一次进入演练台，或打开全面浏览，都要先完成本窗。",
+			"auth.lead": "清洗不需要这一步。第一次进入演练台要先完成本窗。",
 			"auth.warn": "安全警告：演练台只用于你有权管理的本机、离线靶标，或已书面授权的演练环境。未经授权的渗透、攻击、窃取和破坏一律禁止。",
 			"auth.hint.wait": "请阅读声明。{n} 秒后才能勾选。",
 			"auth.hint.scroll": "倒计时已结束。请把声明滚到文末，再勾选。",
@@ -159,7 +158,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"auth.no": "暂不进入",
 			"auth.ok": "确认授权",
 			"auth.ok.tab": "确认授权并进入演练台",
-			"auth.ok.full": "确认授权并全面浏览",
 			"auth.ok.env": "确认授权并打开环境适配",
 			"envGate.title": "环境还没配好",
 			"envGate.lead": "红队模式发送前需要本机工具。未检测到可用环境时，先去环境适配，或确认暂不配置。",
@@ -477,7 +475,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"dock.newSession": "dsh-purge",
 			"dock.inSession": "dsh-purge",
 			"dock.redteam": "Red team",
-			"dock.full": "Full view",
 			"dock.close": "Collapse",
 			"dock.unauthorized": "Unauthorized",
 			"welcome.title": "User notice",
@@ -492,7 +489,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"welcome.check": "I have read and understand this notice and will use the plugin lawfully.",
 			"welcome.ok": "I understand — continue",
 			"auth.title": "Drill console authorization",
-			"auth.lead": "Cleaning does not need this step. Opening Drill or Full view the first time requires this dialog.",
+			"auth.lead": "Cleaning does not need this step. Opening Drill the first time requires this dialog.",
 			"auth.warn": "Warning: the drill console is only for hosts you manage, offline targets, or written authorized exercises. Unauthorized intrusion, attack, theft, or sabotage is forbidden.",
 			"auth.hint.wait": "Read the notice. You can check the boxes in {n}s.",
 			"auth.hint.scroll": "Countdown finished. Scroll to the end, then check the boxes.",
@@ -503,7 +500,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"auth.no": "Not now",
 			"auth.ok": "Authorize",
 			"auth.ok.tab": "Authorize and open Drill",
-			"auth.ok.full": "Authorize and open Full view",
 			"auth.ok.env": "Authorize and open Env adapt",
 			"envGate.title": "Environment is not ready",
 			"envGate.lead": "Red team mode needs local tools before you send. If none are available, open Env adapt or confirm you will continue without them.",
@@ -3690,6 +3686,12 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rt-empty{padding:24px;text-align:center;color:var(--dsw-alias-label-secondary);font-size:12.5px}
 .rt-err{color:var(--dsw-alias-state-error-primary);font-size:12px;padding:6px 10px}
+/* 2026-11-01（1.3.6）：切靶标同步失败的轻量提示。一行、可点关闭、不撑开布局。 */
+.rt-syncwarn{color:var(--dsw-alias-state-error-primary);font-size:11px;line-height:1.3;
+  max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;
+  padding:2px 6px;border-radius:4px;border:1px solid var(--dsw-alias-state-error-primary);
+  opacity:.85}
+.rt-syncwarn:hover{opacity:1}
 .rt-foot{padding:8px 12px;border-top:1px solid var(--dsw-alias-border-l1);font-size:11px;
   color:var(--dsw-alias-label-secondary);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .rt-icon-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;border:1px solid var(--dsw-alias-border-l1);
@@ -3747,19 +3749,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 .rt-section{padding:8px 10px 2px;font-size:11.5px;font-weight:600;color:var(--dsw-alias-label-secondary)}
 .rt-link{color:var(--dsw-alias-brand-primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rt-link:hover{text-decoration:underline}
-.rt-full{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;
-  background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px;line-height:1.5;
-  border-top:3px solid var(--dsw-alias-brand-primary)}
-.rt-full .rt-head{padding:12px 18px}
-.rt-full .rt-tabs{padding:10px 18px 0;gap:6px;flex-wrap:wrap}
-.rt-full .rt-side{width:260px}
-.rt-full .rt-list{width:280px}
-.rt-full .rt-row{grid-template-columns:190px 90px 130px 1.4fr 1.2fr}
-.rt-full .rt-vrow{grid-template-columns:80px minmax(0,1.6fr) 200px 150px 90px 64px}
-.rt-full .rt-pane{padding:18px}
-.rt-full .rt-textarea{min-height:60vh}
-.rt-full .rt-foot{padding:10px 18px;font-size:12px}
-.rt-full .rt-body{max-width:1400px;width:100%;margin:0 auto;flex:1;min-height:0;display:flex;flex-direction:column}
 .rt-chain{flex:1;overflow:auto;padding:10px 12px}
 .rt-step{display:flex;gap:10px;padding:8px 6px;border-left:2px solid var(--dsw-alias-border-l1);margin-left:6px}
 .rt-step:last-child{border-left-color:transparent}
@@ -4142,10 +4131,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
   align-items:center;justify-content:center;gap:10px;cursor:zoom-out;padding:18px}
 .rt-shot-zoom img{max-width:96vw;max-height:86vh;border-radius:6px;box-shadow:0 18px 48px rgba(0,0,0,.5)}
 .rt-shot-zoom-cap{color:#e5e7eb;font-size:12px;text-align:center;max-width:90vw;overflow-wrap:anywhere}`    /* ---------------------------------------------------------- 桥接与状态 */
-    /** 是否在「全面浏览」独立窗口里（URL hash 标记，复用同一套界面代码）。 */
-    const isFullWindow = () => {
-      try { return String(window.location.hash || '') === '#redteam-full' } catch { return false }
-    }
 
     const api = (req) => fetch('/redteam/api', {
       method: 'POST',
@@ -7425,7 +7410,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
     }
 
     function Panel(props) {
-      /* embedded：嵌在 dsh-purge 外层 dock 里时，不再自带收起/全面浏览/拖拽条，避免与外层按钮重叠 */
+      /* embedded：嵌在 dsh-purge 外层 dock 里时，不再自带收起/拖拽条，避免与外层按钮重叠 */
       const embedded = !!(props && props.embedded)
       const st = useUI()
       const [engagements, setEngagements] = React.useState([])
@@ -7438,6 +7423,10 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
       const [refreshKey, setRefreshKey] = React.useState(0)
       const [digest, setDigest] = React.useState(null)
       const [seen, setSeen] = React.useState(null)
+      /* 2026-11-01（1.3.6）：切靶标时后台同步失败的提示。
+         不能复用 err —— err 会把整块 body 换成错误页（见 body 那段 if (err)），
+         一个后台同步失败不值得让整个演练台不可用，所以单独一个轻量状态。 */
+      const [syncWarn, setSyncWarn] = React.useState(null)
 
       React.useEffect(() => {
         if (embedded) return undefined
@@ -7595,26 +7584,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
         ['knowledge', '知识库'],
         ['skills', '技能库'],
       ]
-      const full = isFullWindow()
-      const openFull = () => {
-        try { window.open(window.location.href.split('#')[0] + '#redteam-full', '_blank', 'noopener') } catch (e) { setErr('无法打开新窗口：' + ((e && e.message) || e)) }
-      }
-      const exitFull = () => {
-        /* 优先关掉脚本打开的窗口；关不掉就退回带侧栏的普通界面 */
-        try { window.close() } catch (e) { /* 非脚本打开的窗口无法关闭 */ }
-        try {
-          if (window.location.hash) {
-            window.location.hash = ''
-            window.location.reload()
-          }
-        } catch (e) { /* ignore */ }
-      }
-      React.useEffect(() => {
-        if (!full) return undefined
-        const onKey = (e) => { if (e.key === 'Escape') exitFull() }
-        window.addEventListener('keydown', onKey)
-        return () => window.removeEventListener('keydown', onKey)
-      }, [full])
 
       let body
       if (err) body = h('div', { className: 'rt-err' }, err)
@@ -7647,9 +7616,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
       else if (st.tab === 'scores') body = h(ScoreTab, { engagement: eng, refreshKey: refreshKey })
       else body = h('div', { className: 'rt-empty' }, '未知页签')
 
-      const shellProps = full
-        ? { className: 'rt-full', style: { display: 'flex' } }
-        : embedded
+      const shellProps = embedded
           ? { className: 'rt-dock rt-embedded', 'data-open': '1', style: { width: '100%', display: 'flex' } }
           : {
               className: 'rt-dock',
@@ -7666,14 +7633,13 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
             }
 
       return h('div', shellProps,
-        (full || embedded) ? null : h('div', { className: 'rt-grip', title: '拖动调整宽度', onMouseDown: startResizeLeft }),
-        (full || embedded) ? null : h('div', { className: 'rt-resize-r', title: '拖动调整宽度', onMouseDown: startResizeRight }),
-        (full || embedded) ? null : h('div', { className: 'rt-resize-b', title: '拖动调整高度', onMouseDown: startResizeBottom }),
-        (full || embedded) ? null : h('div', { className: 'rt-resize-c', title: '拖动调整大小', onMouseDown: startResizeCorner }),
-        h('div', { className: 'rt-head', onMouseDown: (full || embedded) ? undefined : startDrag, title: (full || embedded) ? undefined : '按住拖动面板' },
+        embedded ? null : h('div', { className: 'rt-grip', title: '拖动调整宽度', onMouseDown: startResizeLeft }),
+        embedded ? null : h('div', { className: 'rt-resize-r', title: '拖动调整宽度', onMouseDown: startResizeRight }),
+        embedded ? null : h('div', { className: 'rt-resize-b', title: '拖动调整高度', onMouseDown: startResizeBottom }),
+        embedded ? null : h('div', { className: 'rt-resize-c', title: '拖动调整大小', onMouseDown: startResizeCorner }),
+        h('div', { className: 'rt-head', onMouseDown: embedded ? undefined : startDrag, title: embedded ? undefined : '按住拖动面板' },
           embedded ? null : h('div', { className: 'rt-title' }, h('span', { className: 'rt-dot' }),
-            full ? '演练台 · 全面浏览' : '演练台',
-            full ? h('span', { className: 'rt-tag', style: { marginLeft: 6 } }, '独立窗口') : null),
+            '演练台'),
           h('select', {
             className: 'rt-input rt-eng-select',
             style: { maxWidth: embedded ? '100%' : '170px', minWidth: embedded ? '160px' : undefined, flex: embedded ? '1 1 200px' : undefined },
@@ -7681,19 +7647,30 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
             onChange: (e) => {
               setEng(e.target.value)
               loadSnapshot(e.target.value)
-              /* 同步「当前靶标」：原生 skill 目录按它解析技能根 */
-              api({ op: 'activateEngagement', engagement: e.target.value }).catch(() => {})
+              /* 同步「当前靶标」：原生 skill 目录按它解析技能根。
+                 2026-11-01（1.3.6）：以前这里是 .catch(() => {})，同步失败完全静默 ——
+                 用户切了靶标，界面显示已切换，但后端「当前靶标」没改，
+                 之后所有技能路径都按旧靶标解析，且没有任何提示。
+                 现在失败写进 syncWarn，在下拉框右侧显示一行可关闭的提示。 */
+              api({ op: 'activateEngagement', engagement: e.target.value }).then((r) => {
+                if (r && r.ok === false) { setSyncWarn((r && r.error) || '同步当前靶标失败'); return }
+                setSyncWarn(null)
+              }, (err) => setSyncWarn(String((err && err.message) || err)))
             },
           },
             h('option', { value: '', disabled: true }, engagements.length ? '选择靶标' : '暂无靶标'),
             engagements.map((x) => h('option', { key: x.id, value: x.id }, x.name || x.id || '未命名')),
           ),
+          /* 2026-11-01（1.3.6）：切靶标同步失败的提示。只占一行、可点关闭，不挡其它操作。 */
+          syncWarn ? h('span', {
+            className: 'rt-syncwarn',
+            title: '点击关闭此提示',
+            onClick: () => setSyncWarn(null),
+          }, '靶标同步失败：' + syncWarn) : null,
           h('div', { className: 'rt-spacer' }),
           embedded ? null : h(VersionBar, null),
-          full ? h('button', { className: 'rt-btn', title: '回到带侧栏的普通界面（或按 Esc）', onClick: exitFull }, '退出全面浏览') : null,
           embedded ? null : h('button', { className: 'rt-btn', title: '刷新名册、快照与当前页面数据', onClick: refreshAll }, '刷新'),
-          (full || embedded) ? null : h('button', { className: 'rt-btn', title: '在新浏览器窗口打开完整控制台', onClick: openFull }, '全面浏览'),
-          (full || embedded) ? null : h('button', { className: 'rt-btn', title: '收起面板', onClick: () => setUI({ open: false }) }, '收起')),
+          embedded ? null : h('button', { className: 'rt-btn', title: '收起面板', onClick: () => setUI({ open: false }) }, '收起')),
         /* 页签栏用标准 tablist/tab 角色：读屏软件据此播报「第几个页签、是否选中」。
            键盘用户 Tab 进来后可用 Enter/Space 切换（由 clickable 提供）。 */
         h('div', { className: 'rt-tabs', role: 'tablist' }, tabs.map((t) => {
@@ -7722,7 +7699,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
           h('span', null, '漏洞 ' + (stats.vulns || 0)),
           h('span', null, '被动/主动 ' + (stats.passiveSignals || 0) + '/' + (stats.activeSignals || 0)),
           h('div', { className: 'rt-spacer' }),
-          full ? h('span', null, '按 Esc 或点右上角「退出全面浏览」回到带侧栏的界面') : null,
           h('span', null, 'SQLite · ' + (snapshot && snapshot.engagement ? snapshot.engagement.name : ''))))
     }
 
@@ -7745,18 +7721,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
       }, '⛨ RedTeam')
     }
 
-    /** 侧栏「全面浏览」：在新浏览器窗口打开完整控制台（当前窗口不受影响）。 */
-    function FullButton(props) {
-      const open = () => {
-        try { window.open(window.location.href.split('#')[0] + '#redteam-full', '_blank', 'noopener') } catch { /* 被浏览器拦截 */ }
-      }
-      return h('button', {
-        className: 'rt-icon-btn',
-        title: '全面浏览：在新窗口打开完整控制台（当前窗口不受影响；新窗口内按 Esc 退出）',
-        onClick: open,
-      }, h('span', { style: { fontSize: 14 } }, '⛶'), props.wide ? h('span', null, '全面浏览') : null)
-    }
-
     /* ---------------------------------------------------------- 插件入口 */
     /** 唯一硬依赖：槽位注册表。 */
     const inject = ['slots']
@@ -7766,7 +7730,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
      * @param ctx - 客户端根上下文。
      */
     function applyDrillParts() {
-      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, isFullWindow: isFullWindow, setDockWidth: setDockWidth };
+      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, setDockWidth: setDockWidth };
     }
 
     exports.inject = inject
@@ -7880,9 +7844,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				setDock({ open: true, tab: "drill", authOpen: false, pending: "tab" });
 				try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true }); } catch { /* ignore */ }
 				if (pending === "env") openEnv();
-				if (pending === "full") {
-					try { window.open(window.location.href.split("#")[0] + "#redteam-full", "_blank", "noopener"); } catch { /* ignore */ }
-				}
 				return;
 			}
 			/* 未授权：直接切到演练台页签并弹出授权窗（不再停在清洗页，避免像「没触发」） */
@@ -8030,9 +7991,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 			};
 			const okLabel = !ready
 				? t("auth.ok")
-				: (props.pending === "full"
-					? t("auth.ok.full")
-					: (props.pending === "env" ? t("auth.ok.env") : t("auth.ok.tab")));
+				: (props.pending === "env" ? t("auth.ok.env") : t("auth.ok.tab"));
 			return h("div", { className: "dshp-auth-mask", role: "dialog", "aria-modal": "true" },
 				h("div", { className: "dshp-auth-modal" },
 					h("h2", null, t("auth.title")),
@@ -8072,9 +8031,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 								try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true }); } catch { /* ignore */ }
 								if (kind === "env") {
 									try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true, tab: "env" }); } catch { /* ignore */ }
-								}
-								if (kind === "full") {
-									try { window.open(window.location.href.split("#")[0] + "#redteam-full", "_blank", "noopener"); } catch { /* ignore */ }
 								}
 							},
 						}, okLabel),
@@ -8588,9 +8544,6 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				h("div", { className: "dshp-dock-head", onMouseDown: startDrag, title: "按住拖动面板" },
 					h("b", null, "dsh-purge"),
 					h("span", { style: { flex: 1 } }),
-					st.tab === "drill" && readDrillAuth()
-						? h("button", { type: "button", onClick: () => requestDrill("full") }, t("dock.full"))
-						: null,
 					h("button", { type: "button", onClick: () => setDock({ open: false, authOpen: false, tab: "clean", pending: "tab" }) }, t("dock.close")),
 				),
 				h("div", { className: "dshp-dock-tabs", role: "tablist" },
