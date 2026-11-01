@@ -28,11 +28,10 @@ if (!client.includes('"dock.clean"')) {
 			"dock.drill": "演练台",
 			"dock.toggle": "dsh-purge",
 			"dock.newSession": "dsh-purge",
-			"dock.full": "全面浏览",
 			"dock.close": "收起",
 			"dock.unauthorized": "未授权",
 			"auth.title": "演练台授权确认",
-			"auth.lead": "清洗不需要这一步。第一次进入演练台，或打开全面浏览，都要先完成本窗。",
+			"auth.lead": "清洗不需要这一步。第一次进入演练台要先完成本窗。",
 			"auth.warn": "安全警告：演练台只用于你有权管理的本机、离线靶标，或已书面授权的演练环境。未经授权的渗透、攻击、窃取和破坏一律禁止。",
 			"auth.hint.wait": "请阅读声明。{n} 秒后才能勾选。",
 			"auth.hint.scroll": "倒计时已结束。请把声明滚到文末，再勾选。",
@@ -42,8 +41,7 @@ if (!client.includes('"dock.clean"')) {
 			"auth.check.ban": "我确认禁止任何违法用途。未完成本授权，不得使用演练台。",
 			"auth.no": "暂不进入",
 			"auth.ok": "确认授权",
-			"auth.ok.tab": "确认授权并进入演练台",
-			"auth.ok.full": "确认授权并全面浏览",`,
+			"auth.ok.tab": "确认授权并进入演练台",`,
 	);
 	client = client.replace(
 		'\t\t\tnav: "Rules",',
@@ -52,11 +50,10 @@ if (!client.includes('"dock.clean"')) {
 			"dock.drill": "Drill",
 			"dock.toggle": "dsh-purge",
 			"dock.newSession": "dsh-purge",
-			"dock.full": "Full view",
 			"dock.close": "Collapse",
 			"dock.unauthorized": "Unauthorized",
 			"auth.title": "Drill console authorization",
-			"auth.lead": "Cleaning does not need this step. Opening Drill or Full view the first time requires this dialog.",
+			"auth.lead": "Cleaning does not need this step. Opening Drill the first time requires this dialog.",
 			"auth.warn": "Warning: the drill console is only for hosts you manage, offline targets, or written authorized exercises. Unauthorized intrusion, attack, theft, or sabotage is forbidden.",
 			"auth.hint.wait": "Read the notice. You can check the boxes in {n}s.",
 			"auth.hint.scroll": "Countdown finished. Scroll to the end, then check the boxes.",
@@ -66,8 +63,7 @@ if (!client.includes('"dock.clean"')) {
 			"auth.check.ban": "I will not use this for any illegal purpose. Without this authorization the drill console stays closed.",
 			"auth.no": "Not now",
 			"auth.ok": "Authorize",
-			"auth.ok.tab": "Authorize and open Drill",
-			"auth.ok.full": "Authorize and open Full view",`,
+			"auth.ok.tab": "Authorize and open Drill",`,
 	);
 }
 
@@ -141,7 +137,7 @@ const dockBlock = `
 		const AUTH_LEGAL_HTML = ${JSON.stringify(LEGAL)};
 
 		${BEGIN}
-		const __dshPurgeDrill = { CSS: "", Panel: null, setUI: () => {}, useUI: () => ({ open: false }), isFullWindow: () => false, setDockWidth: () => {} };
+		const __dshPurgeDrill = { CSS: "", Panel: null, setUI: () => {}, useUI: () => ({ open: false }), setDockWidth: () => {} };
 		${END}
 
 		function readDrillAuth() {
@@ -175,9 +171,6 @@ const dockBlock = `
 			if (readDrillAuth()) {
 				setDock({ open: true, tab: "drill", authOpen: false, pending: "tab" });
 				try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true }); } catch { /* ignore */ }
-				if (pending === "full") {
-					try { window.open(window.location.href.split("#")[0] + "#redteam-full", "_blank", "noopener"); } catch { /* ignore */ }
-				}
 				return;
 			}
 			setDock({ open: true, tab: "drill", authOpen: true, pending: pending });
@@ -225,7 +218,7 @@ const dockBlock = `
 				if (locked) return;
 				setChecks((prev) => Object.assign({}, prev, { [id]: !prev[id] }));
 			};
-			const okLabel = !ready ? t("auth.ok") : (props.pending === "full" ? t("auth.ok.full") : t("auth.ok.tab"));
+			const okLabel = !ready ? t("auth.ok") : t("auth.ok.tab");
 			return h("div", { className: "dshp-auth-mask", role: "dialog", "aria-modal": "true" },
 				h("div", { className: "dshp-auth-modal" },
 					h("h2", null, t("auth.title")),
@@ -263,9 +256,6 @@ const dockBlock = `
 								const kind = props.pending || "tab";
 								setDock({ authOpen: false, open: true, tab: "drill", pending: "tab" });
 								try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true }); } catch { /* ignore */ }
-								if (kind === "full") {
-									try { window.open(window.location.href.split("#")[0] + "#redteam-full", "_blank", "noopener"); } catch { /* ignore */ }
-								}
 							},
 						}, okLabel),
 					),
@@ -308,9 +298,6 @@ const dockBlock = `
 					h("div", { className: "dshp-dock-head" },
 						h("b", null, "dsh-purge"),
 						h("span", { style: { flex: 1 } }),
-						st.tab === "drill" && readDrillAuth()
-							? h("button", { type: "button", onClick: () => requestDrill("full") }, t("dock.full"))
-							: null,
 						h("button", { type: "button", onClick: () => setDock({ open: false, authOpen: false, tab: "clean", pending: "tab" }) }, t("dock.close")),
 					),
 					h("div", { className: "dshp-dock-tabs", role: "tablist" },
