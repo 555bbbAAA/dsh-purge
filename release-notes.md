@@ -1,50 +1,73 @@
-# 1.3.4
+# 1.3.5
 
-修掉一个让「应用内更新永远装不上」的根因：host 收到 shutdown 后不退出。
+一句话：把 1.3.0 到 1.3.4 五个版本里一直缺的「运行时守卫自动部署」补回来，并修掉一个把 32 条补丁误报成「无目标」的排查字段 bug。
 
-## 与上一版本 v1.3.3 的对比
+## 与上一版本 v1.3.4 的对比
 
-| 维度 | v1.3.3 | v1.3.4 |
+| 维度 | v1.3.4 | v1.3.5 |
 |---|---|---|
-| 应用内更新 | 点「安装并重启」报 `Host did not complete graceful task teardown` | 正常安装并重启 |
-| host 退出时机 | 关完插件后靠事件循环自然结束（20 个插件的活句柄让它永不退出） | 回完 `shutdown-complete` 立即 `process.exit(0)` |
-| 补丁总数 | 76 条 | 77 条（新增 #89） |
-| 面板计数 | 70/71（#89 因目标 key 不对被误报 skipped） | 71/71（新增 `desktop-host` 目标 key） |
+| Startup 守卫部署 | `preflight.js` 里没有部署代码。守卫脚本只在仓库里躺着，`<DSH_HOME>\dsh-purge\runtime-guard.ps1` 与 Startup 里的 `dsh-runtime-guard.vbs` 靠手工摆，换台机器就没有第三层自愈 | 恢复 `ensureRuntimeGuard()`：插件每次启动把包内 `scripts/runtime-guard.ps1` 复制到 `<DSH_HOME>\dsh-purge\`，并在 Startup 写纯 ASCII 的 `dsh-runtime-guard.vbs`。内容没变就不重写 |
+| `bundles` 自愈 | `if (idx <= 0) return` —— 插件被从 `dsh.profile.bundles` 里摘掉后永不回来 | 改回「不在列表就补到第 0 位、在列表但非首位就提上来」。官方更新清空 runtime 时，只有排在 `dsh-base` 之前才救得了启动 |
+| `target_present` 排查字段 | 直接把 `core.targetFiles()` 的值喂给 `fs.existsSync`。该函数返回的 77 个键里 29 个是**数组**，Node 的 `fs.existsSync(数组)` 返回 `false` 而不抛异常，于是 32 条补丁被误判成「目标不存在」 | 先归一成数组再逐个判。77 条重跑后 `target_present=false` 从 32 条降到 0 |
+| 卸载清理 | 不清 Startup 项与部署的 ps1。卸载后每次登录 `wscript` 弹「找不到文件」错误框 | `uninstallPurge()` 新增 `removeRuntimeGuard()`：删 `<DSH_HOME>\dsh-purge\runtime-guard.ps1` 与 Startup 的 vbs；保留 `applied.json` / `runtime-backup` / `asset-fingerprint.json` 等状态文件，重装还能用 |
+| 换包重启前跑守卫 | `ASAR_SWAP_PS1` 里只有一句 `if ($DshHome) { ... }`，但 `$DshHome` **从来没被注入过**，恒为空 —— 那句一直是死代码。注释声称「换包那条路径改由 exit-then-swap 在拉起应用前直接跑守卫」，实际 grep `guard` 为空 | 注入 `$DshHome`（`resolveDshHomeForScript()` 从环境变量或 `findDshHome()` 推断），并在 `Start-Process -FilePath $ExePath` 之前调一次 `runtime-guard.ps1`。守卫自判「文件在不在」，不缺 211ms 退出，不拖慢启动 |
+| 换包前守卫的硬超时 | 直接 `& powershell.exe -File $guardPs1` 调用。守卫若卡住（安全软件拦截 / 磁盘 IO 挂起），换包脚本会无限等，应用永远拉不起来 | 改用 `Start-Process -PassThru` + `Wait-Process -Timeout 10`。正常 0.38 秒返回，超时则 `Stop-Process` 杀掉并继续拉起。实测：造 `Start-Sleep 30` 的假守卫，总耗时 10.2 秒后正常放行 |
+| 部署副本不覆盖 | `ensureRuntimeGuard()` 按内容比对后覆盖目标。用户手工摆的部署副本（比如抬头标了别的版本号）会被自动覆盖掉，失去手工控制权 | 改成「只在目标不存在时写」。已存在就保留并记一行日志；用户删掉后下次启动自动补上。实测三个场景：不存在→部署、已存在→保留原文、删掉→重建 |
 
-## 新增补丁 #89 DESKTOP_HOST_EXIT_AFTER_SHUTDOWN
+## 恢复的 53 行是怎么丢的
 
-`dsh-desktop-host` 的 `stop()` 在 `shutdown(0)` + 回话 + `process.disconnect()` 之后**没有 `process.exit()`**，靠事件循环自然结束。装了多个插件后，插件留下的活句柄（推理引擎子进程、WebSocket、定时器、SQLite 连接）让事件循环永远不空转，host 进程不退。
-
-外壳侧 `exitsWithin(exited, 1e4)` 只等 10 秒，超时即 `SIGTERM` 并判「非优雅退出」，抛：
+`lib/preflight.js` 的完整提交史只有五个 commit：
 
 ```
-desktop update: Host did not complete graceful task teardown
-(exit null, signal SIGTERM, shutdown acknowledged true, graceful deadline exceeded true)
+ee7883e0  2026-10-24 21:14  1.2.0   汇总 1.1.81-1.1.125
+d3b3145f  2026-10-24 22:31  1.2.2   修 apply_progress 卡死
+ba7d4ef3  2026-10-25 15:41  1.2.16  新增 ensureRuntimeGuard（+104 行）
+974245a2  2026-10-25 16:00  1.3     保留，加 4 行注释
+04df43ea  2026-10-25 19:42  chore: sync tree to v1.3   ← -53 +3，把它删了
 ```
 
-此时 `install()` 流程中断，`dshPurgeHandoffDesktopUpdate` 一次都不会执行，安装器根本没被调起。
+那次 `chore: sync tree to v1.3` 是 19:41–19:49 连着 100 个批量同步提交之一，用本机旧目录覆盖了仓库。同一个 commit 还把 `ensureBundleFirst` 的「被摘掉就补回第 0 位」回退成 `if (idx <= 0) return`。
 
-#89 在那两行之后插入 `process.exit(0)`：插件已 dispose 完、外壳已收到确认，三个判据（`exitCode=0` / `shutdownCompleted=true` / `graceful=true`）全部满足，安装继续。
+**因为回退发生在 `v1.3` tag 之后，1.3 / 1.3.1 / 1.3.2 / 1.3.3 / 1.3.4 五个版本都带着这个缺口。** 1.3.5 把它们一起补回来。
 
-## 新增 targetFiles key：desktop-host
+## 32 条误判的补丁
 
-`desktop-shell` 只解析到 `app/lib/main.js` 一个文件，而 #89 的目标在另一个包（`dsh-desktop-host/lib/index.js`）。不给它独立 key，状态判定读不到 markers，会把已打上的补丁误报成 `skipped`。
+`target_present` 只用于排查显示，不参与状态判定（`patch_status` 按文件内容判定，是唯一权威），所以这个 bug 不影响功能，只影响排查时看到的信息。涉及：
 
-## 实测
+```
+#13 #14 #22 #24 #33 #34 #35 #36 #37 #38 #39 #43 #48 #50 #51 #52 #54 #55
+#58 #59 #60 #61 #62 #67 #68 #69 #72 #74 #75 #78 #87 #88
+```
 
-在 0.2.1-rc.3 主机上走通完整应用内更新，升级到 0.2.1-rc.5：
+样本验证 #67 `AGENT_LOOP_MESSAGES_GUARD`：目标文件 `dsh-agent-loop/lib/index.js` 存在（76,011 字节），marker `[dsh-purge] guard undefined messages` 在文件里，原始 needle 不在 —— 补丁确实打上了，只是字段报错了。
 
-- 升级前：`exit null / signal SIGTERM / graceful deadline exceeded true`
-- 升级后：安装器正常调起，宿主版本变为 `0.2.1-rc.5`（buildCommit `d4db512a`）
-- 补丁 71/71，0 待应用，`update_phase=active`
+## 这一版验证到的
+
+```
+node --check lib/index.js       ok
+node --check lib/core.js        ok
+node --check lib/reapply.js     ok
+node --check lib/preflight.js   ok
+node --check lib/uninstall.js   ok
+import('./lib/index.js')        ok
+
+ensureBundleFirst 行为测试：bundles 里没有 dsh-purge → 改后补回第 0 位
+removeRuntimeGuard 行为测试：删 ps1 + vbs，保留 applied.json；第二次执行幂等，不抛异常
+target_present 新逻辑：77 条补丁全部 true，误判 0 条
+换包脚本语法：抽 ASAR_SWAP_PS1 拼成真实脚本（97 条目 / 5,664 字节），PowerShell 解析器无错误
+换包脚本行为：守卫段在 Start-Process 之前，造临时 DSH_HOME 实测守卫被真正调用
+超时兜底：造 Start-Sleep 30 的假守卫 → 10.2 秒后放行；正常守卫 0.38 秒返回
+不覆盖：目标不存在→部署；已存在→保留原文；删掉→重建
+```
 
 ## 已知限制
 
 - rc.5 下 `dsh-better-sidebar` 与 `dsh-dream-skin` 停在 pending（`waiting for service: webRuntime`），不影响宿主运行，但侧边栏与皮肤可能不生效。
-- 6 条 na 补丁（#28 #30 #31 #64 #65 #76）是目标包本机不装，属正常。
+- 6 条 na 补丁（#28 #30 #31 #64 #65 #76）都是 `optional: true` 且 `targetFiles` 里对应键全部未映射（liangshen-tool-bootstrap / hooks-claude-code / hooks-codex / preset-unrestricted），走的是 `patchStatus()` 里 `p.optional ? "na" : "missing_file"` 分支，属正常。
+- Startup 守卫只覆盖「登录时」这个窗口。官方更新完立刻自动重启那种场景，靠换包链路的 exit-then-swap 在拉起应用前直接跑守卫。非管理员账号建不了 `onlogon` 计划任务（`ERROR: Access is denied.`），所以没有做计划任务。
 
 ## 安装
 
 ```
-dsh plugin --profile desktop add file:<path>/dsh-purge-1.3.4.tgz
+dsh plugin --profile desktop add file:<path>/dsh-purge-1.3.5.tgz
 ```
