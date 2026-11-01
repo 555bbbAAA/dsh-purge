@@ -47,7 +47,7 @@ for (; j < body.length; j += 1) {
 	}
 }
 const applyParts = `function applyDrillParts() {
-      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, isFullWindow: isFullWindow, setDockWidth: setDockWidth };
+      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, setDockWidth: setDockWidth };
     }
 `;
 body = body.slice(0, applyAt) + applyParts + body.slice(j);
