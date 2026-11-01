@@ -25,6 +25,8 @@ jobs:
           node --check lib/index.js
           node --check lib/core.js
           node --check lib/reapply.js
+          node --check lib/preflight.js
+          node --check lib/uninstall.js
           node --input-type=module -e "import './lib/index.js'"
 
       - name: Publish GitHub Release
@@ -57,6 +59,21 @@ jobs:
           git archive --format=zip --prefix="dsh-purge-${version}/" --output="$zip" HEAD
           test -s "$zip"
 
+          # 2026-11-01：同时产出 npm tarball。历史发布都带 .tgz，但 CI 从来没打过，
+          # 一直是本机 npm pack 后手工上传。npm pack 不需要 node_modules，只读
+          # package.json 的 files 字段，CI 里直接跑即可。
+          tgz="dsh-purge-${version}.tgz"
+          npm pack --pack-destination . >/dev/null
+          test -s "$tgz"
+
+          # 2026-11-01：补 SHA256SUMS。历史发布都有这个资产，但 CI 从来没生成过，
+          # 一直是手工补的。格式与手工版一致：<hex>  <filename>，zip 与 tgz 各一行。
+          sums="SHA256SUMS-${version}"
+          sha256sum "$zip" "$tgz" > "$sums"
+          test -s "$sums"
+
           gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file release-notes.md
-          gh release upload "$tag" "$zip" --clobber
+          gh release upload "$tag" "$zip" "$tgz" "$sums" --clobber
           echo "published https://github.com/555bbbAAA/dsh-purge/releases/tag/${tag}"
+          echo "assets: $zip ($(stat -c%s "$zip") bytes), $tgz ($(stat -c%s "$tgz") bytes), $sums"
+          cat "$sums"
