@@ -30,6 +30,7 @@
     "client.js",
     "cordis.patch.yml",
     "INSTALL.md",
+    "release-notes.md",
     "README.md",
     "LICENSE",
     "VERIFY.md",

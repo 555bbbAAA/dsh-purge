@@ -1,6 +1,6 @@
 # 1.3.8
 
-一句话：修「插件内更新完点重启，dsh 没重启」—— 两处缺陷叠加，vbs 启动器无 BOM 在中文用户名下路径乱码（助手从没起来），加上助手未就绪时宿主照样退出（关了没人拉起）。
+一句话：修「插件内更新完点重启，dsh 没重启」—— 三处缺陷叠加在一条启动链上：vbs 无 BOM 在中文用户名下路径乱码、vbs 引号多包一层让 VBScript 报「语句未结束」、plus 助手未就绪时宿主照样退出。三个全修，换包这条链才通。
 
 ## 与上一版本 v1.3.7 的对比
 
@@ -9,9 +9,12 @@
 | 补丁总数 | 73 | 73（不变） |
 | 0.2.1-rc.5 | 71 applied / 6 na | 71 applied / 6 na（不变） |
 | 0.2.2-rc.1 | 71 applied / 2 na | 71 applied / 2 na（不变） |
-| 换包重启 | 助手起不来也照样退出 | 先重试，仍不成就保持运行并录失败标记 |
+| 观察者 vbs 编码 | UTF-8 无 BOM，中文路径乱码 | UTF-16LE + BOM |
+| 观察者 vbs 引号 | `sh.Run ""C:\...`，语法错 | `Chr(34)` 拼 `cmdLine`，正常启动 |
+| 助手未就绪 | 宿主照样退出 | 先重试，仍不成则保持运行并录失败标记 |
+| `release-notes.md` | 不在安装清单里 | 随更新一起覆盖 |
 
-只改了两个文件：`lib/desktop.js`（106,444 → 109,114 B）、`lib/restart-desktop.js`（16,385 → 16,928 B）。补丁表、锚点、计数一律未动。
+改了三个文件：`lib/desktop.js`、`lib/restart-desktop.js`、`lib/update.js`；另动 `package.json`（版本 + `files` 补 `release-notes.md`）与 `README.md`（版本串）。补丁表、锚点、计数一律未动。
 
 ## 缺陷一：vbs 启动器无 BOM，中文用户名下路径乱码
 
@@ -38,9 +41,41 @@ PowerShell 找不到那个脚本，直接退出。助手从没跑起来，而调
 | ✗ | ✓ | 失败 |
 | ✓ | ✓ | **成功** |
 
-两个都必须带 BOM 才行。修法：新增 `writeWshVbs()` 统一写 UTF-16LE + BOM，五个 `.vbs` 写入点全部改走它；三个 `.ps1` 写入点补 `\uFEFF` 前缀。
+两个都必须带 BOM 才行。修法：新增 `writeWshVbs()` 统一写 UTF-16LE + BOM，五个 `.vbs` 写入点全部改走它；四个 `.ps1` 写入点补 `\uFEFF` 前缀。
 
-## 缺陷二：助手未就绪时宿主照样退出
+## 缺陷二：vbs 引号多包了一层，观察者启动即死
+
+这一处比缺陷一更隐蔽 —— 它让整条换包链断在第一步。
+
+`scheduleAsarRenameWhenIdle` 里给观察者写启动器，原来是这样：
+
+```js
+const quote = (v) => String(v).replace(/"/g, '""');
+const pieces = [psExe, ...watchArgs].map((a) => `"${quote(a)}"`);
+// pieces 里每一项已经带引号了
+`sh.Run "${pieces.join(" ")}", 0, False`
+// 再整体套一层 → 生成 sh.Run ""C:\...powershell.exe" ...
+```
+
+VBScript 看到 `sh.Run ""` 会把 `""` 当成转义引号，紧接着的裸路径就成了非法 token。实测报错：
+
+```
+cscript: ...dsh-purge-asar-watch-18876-1609a3c2.vbs(4, 10)
+         Microsoft VBScript 编译器错误: 语句未结束
+```
+
+于是 `wscript.exe //B` 一启动就退出，观察者进程从没存在过 —— 支撑证据：`dsh-purge-asar-rename-idle.log` 不存在、没有 `wscript`/`powershell` 进程、`app.asar` 213,202,918 B 原封不动、`rename-pending` 停在 00:17:36。宿主在等一个永远不会来的信号。
+
+**这个 bug 在 1.3.7 里就有**（那份 `desktop.js:1431` 同样的写法），不是本版引入的。缺陷一把 vbs 变成乱码，语法错被更早的错误盖住，所以它一直没露出来 —— 只修缺陷一，现象完全不变。
+
+修法：改成跟 `spawnHelper`、换包启动器那两处一致的写法，用 `Chr(34)` 拼 `cmdLine`，再 `sh.Run cmdLine, 0, False`：
+
+```js
+const cmdParts = [psExe, ...watchArgs].map((a) => `Chr(34) & "${quote(a)}" & Chr(34)`);
+`cmdLine = ${cmdParts.join(' & " " & ')}`
+```
+
+## 缺陷三：助手未就绪时宿主照样退出
 
 原来：
 
@@ -55,6 +90,10 @@ waitForReady(readyMarker, budget).then((ready) => {
 
 修法：`ready=true` → 照旧 `gracefulExit()`；`ready=false` → 重试启动一次，仍不成则**保持运行**、把失败写进 `<dshHome>/dsh-purge/swap-restart-failed.json` 供 `/status` 读取。
 
+## 顺手补的：发行说明不进安装清单
+
+`package.json` 的 `files` 和 `lib/update.js` 的 `COPY_NAMES` 都没有 `release-notes.md`，所以插件内更新永远不覆盖它 —— 装上新版的机器上，`release-notes.md` 还停在 1.3.6。两处都补上。
+
 ## 验证
 
 | 项 | 结果 |
@@ -63,14 +102,18 @@ waitForReady(readyMarker, budget).then((ready) => {
 | `scripts/selftest.mjs` | 17/17 通过 |
 | 2x2 BOM 矩阵 | 只有 ps1 ✓ + vbs ✓ 那格成功 |
 | `writeWshVbs` 产出字节 | UTF-16LE BOM `FF FE`，解出路径含「张」完好 |
+| 修复后 vbs 语法 | `cscript` 无报错 |
+| 修复后 vbs 真跑 | `wscript //B` 启动，写盘验证通过 |
+| 真实 11 个参数传参 | 参数含空格路径全部原样到达 PowerShell |
 | 补丁表 | 73 条未动，0.2.2-rc.1 上仍 71 applied / 2 na |
 
 ## 已知限制
 
-- 这只修「重启」这一步。如果宿主当前已经卡在 `needs_swap`（`app.asar` 没改名、`app.asar.rename-pending` 还在），装 1.3.8 后仍需再点一次应用或重启把换包走完。
+- 这只修「重启」这一步。如果宿主当前已经卡在 `needs_swap`（`app.asar` 没改名、`app.asar.rename-pending` 还在），装好之后仍需再点一次应用或重启把换包走完。
 - 路径含非 ASCII 的其他场景（比如 Startup 守卫的 `dsh-runtime-guard.vbs`）走的是另一条 ASCII 校验分支，本次未改。
-
 ---
+
+
 
 # 1.3.7
 
