@@ -438,6 +438,9 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"metric.sealed.count": "待解开",
 			"metric.lost": "补丁已丢失，请重新应用",
 			"metric.lost.count": "已丢失",
+			"patchlist.sealed": "宿主当前是密封包（官方刚升级或还没解开）。点上方「应用」解包后，这里会显示完整补丁表。",
+			"patchlist.lost": "补丁已丢失。点上方「应用」重新打一遍。",
+			"patchlist.unlocated": "还没定位到本机 Harness。装好官方客户端后点「应用」即可。",
 			"rewind.label": "回退",
 			"rewind.aria": "回退",
 			"rewind.busy": "回退中…",
@@ -448,7 +451,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"rewind.round": "回退上一轮",
 			"rewind.round.hint": "把这一轮发出去的那句放回输入框；子代理也只撤这一轮",
 			"hooksDeny.title": "Hooks 拦截",
-			"hooksDeny.bypass": "放行 hooks 的 deny / ask（补丁 30 / 31 / 64 / 65）",
+			"hooksDeny.bypass": "放行 hooks 的 deny / ask（补丁 30 / 31 / 64 / 65；0.2.2 起上游已移除 hooks 包，本项仅对旧宿主有效）",
 			"hooksDeny.hint": "关掉后，用户自己的 PreToolUse / UserPromptSubmit / Stop hook 的 deny 会按官方逻辑生效。官方 ask 分支本身是空操作，关开关不会弹出审批框。改完后点「应用」并重启才写进宿主。",
 			"saved.hooksDeny": "已保存",
 			"continue.title": "失败重试 / 继续",
@@ -778,6 +781,9 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"metric.sealed.count": "Sealed",
 			"metric.lost": "Patches lost — Apply again",
 			"metric.lost.count": "Lost",
+			"patchlist.sealed": "The host is still sealed (official update just ran, or not unpacked yet). Click Apply above to unpack; the full patch table appears after that.",
+			"patchlist.lost": "Patches were lost. Click Apply above to write them again.",
+			"patchlist.unlocated": "This install was not located yet. Install the official client, then click Apply.",
 			"status.unlocated": "Not located",
 			"metric.unlocated": "This install was not found yet",
 			"rewind.label": "Undo",
@@ -790,7 +796,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"rewind.round": "Undo last round",
 			"rewind.round.hint": "Put this round's message back in the box; subagents drop only this round",
 			"hooksDeny.title": "Hook interception",
-			"hooksDeny.bypass": "Bypass hook deny / ask (patches 30 / 31 / 64 / 65)",
+			"hooksDeny.bypass": "Bypass hook deny / ask (patches 30 / 31 / 64 / 65; upstream removed the hooks packages in 0.2.2, so this only affects older hosts)",
 			"hooksDeny.hint": "When off, your own PreToolUse / UserPromptSubmit / Stop hook deny runs as the official host wrote it. The official ask branch is a no-op; turning this off will not show an approval dialog. Click Apply and restart to write the host files.",
 			"saved.hooksDeny": "Saved",
 			"continue.title": "Retry / Continue",
@@ -1151,8 +1157,21 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			const groupedSigRef = useRef("");
 			if (!state || !state.patch_status) return h("div", { className: "dshp-skel", style: { height: 120 } });
 			const located = !!state.ai_base;
-			// 2026-10-26：未定位到宿主时不再留白（原来 return null 一片空），给占位骨架
-			if (!located) return h("div", { className: "dshp-skel", style: { height: 96 } });
+			// 2026-11-06：未定位到宿主时不再画骨架屏。
+			// 原来 return 一个 96px 的 dshp-skel，本意是「别留白」，但密封态（官方刚升级、
+			// asar 还在、解包树没建）会**长期停在这个分支**，骨架屏在视觉上就是「一直在加载」，
+			// 用户会以为插件卡在扫描补丁。这里改成明确终态文案。
+			if (!located) {
+				const sealedNow = !!(state.asar_still_sealed || state.needs_extract);
+				const lostNow = !!state.patches_lost;
+				const hint = lostNow
+					? t("patchlist.lost")
+					: (sealedNow ? t("patchlist.sealed") : t("patchlist.unlocated"));
+				return h("div", {
+					className: "dshp-empty",
+					style: { minHeight: 96, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 16px", color: "var(--dshp-mute)", fontSize: 12, lineHeight: 1.6 },
+				}, hint);
+			}
 			let sig = "";
 			try {
 				sig = JSON.stringify(state.patch_status) + "|" + (Array.isArray(state.patches) ? state.patches.length : 0);
