@@ -1,3 +1,77 @@
+# 1.3.8
+
+一句话：修「插件内更新完点重启，dsh 没重启」—— 两处缺陷叠加，vbs 启动器无 BOM 在中文用户名下路径乱码（助手从没起来），加上助手未就绪时宿主照样退出（关了没人拉起）。
+
+## 与上一版本 v1.3.7 的对比
+
+| 维度 | v1.3.7 | v1.3.8 |
+|---|---|---|
+| 补丁总数 | 73 | 73（不变） |
+| 0.2.1-rc.5 | 71 applied / 6 na | 71 applied / 6 na（不变） |
+| 0.2.2-rc.1 | 71 applied / 2 na | 71 applied / 2 na（不变） |
+| 换包重启 | 助手起不来也照样退出 | 先重试，仍不成就保持运行并录失败标记 |
+
+只改了两个文件：`lib/desktop.js`（106,444 → 109,114 B）、`lib/restart-desktop.js`（16,385 → 16,928 B）。补丁表、锚点、计数一律未动。
+
+## 缺陷一：vbs 启动器无 BOM，中文用户名下路径乱码
+
+原来写 `.vbs` 用的是：
+
+```js
+fs.writeFileSync(vbs, body, "utf8");   // 没有 BOM
+```
+
+WSH 读**无 BOM 的 `.vbs` 时按系统 ANSI（中文机是 GBK）解码**。用户名是「张」时，UTF-8 字节被 GBK 读成「寮燶」，于是脚本里那行变成：
+
+```
+-File "C:\Users\寮燶AppData\Local\Temp\dsh-purge-asar-swap-36640.ps1"
+```
+
+PowerShell 找不到那个脚本，直接退出。助手从没跑起来，而调用方只看到 `ready=false`。
+
+**2x2 实测矩阵**（四组路径全都含「张」）：
+
+| ps1 BOM | vbs BOM | 结果 |
+|---|---|---|
+| ✗ | ✗ | 失败 |
+| ✓ | ✗ | 失败 |
+| ✗ | ✓ | 失败 |
+| ✓ | ✓ | **成功** |
+
+两个都必须带 BOM 才行。修法：新增 `writeWshVbs()` 统一写 UTF-16LE + BOM，五个 `.vbs` 写入点全部改走它；三个 `.ps1` 写入点补 `\uFEFF` 前缀。
+
+## 缺陷二：助手未就绪时宿主照样退出
+
+原来：
+
+```js
+waitForReady(readyMarker, budget).then((ready) => {
+  logInternal("asar swap: helper ready=" + ready);
+  gracefulExit();          // ← ready 为 false 也退
+});
+```
+
+「助手已起来 → 退出让它接管」和「助手没起来 → 退出就是把自己关了没人管」是**相反**的两件事，代码里却走了同一条路。实测后果：宿主退出、Electron 没被杀、`app.asar` 没改名、也没人 relaunch。用户看到的是「点了重启，dsh 没了」，日志只平静地写一句 `ready=false`。
+
+修法：`ready=true` → 照旧 `gracefulExit()`；`ready=false` → 重试启动一次，仍不成则**保持运行**、把失败写进 `<dshHome>/dsh-purge/swap-restart-failed.json` 供 `/status` 读取。
+
+## 验证
+
+| 项 | 结果 |
+|---|---|
+| 九个入口 `node --check` | 全 OK |
+| `scripts/selftest.mjs` | 17/17 通过 |
+| 2x2 BOM 矩阵 | 只有 ps1 ✓ + vbs ✓ 那格成功 |
+| `writeWshVbs` 产出字节 | UTF-16LE BOM `FF FE`，解出路径含「张」完好 |
+| 补丁表 | 73 条未动，0.2.2-rc.1 上仍 71 applied / 2 na |
+
+## 已知限制
+
+- 这只修「重启」这一步。如果宿主当前已经卡在 `needs_swap`（`app.asar` 没改名、`app.asar.rename-pending` 还在），装 1.3.8 后仍需再点一次应用或重启把换包走完。
+- 路径含非 ASCII 的其他场景（比如 Startup 守卫的 `dsh-runtime-guard.vbs`）走的是另一条 ASCII 校验分支，本次未改。
+
+---
+
 # 1.3.7
 
 一句话：把补丁表对上 0.2.2-rc.1 —— 12 条失效里 8 条换了新锚点、4 条退役，同时保持 0.2.1 整条线原样可用。
