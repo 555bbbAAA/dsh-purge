@@ -1,3 +1,100 @@
+# 1.3.9
+
+一句话：修「红队模式在新版 dsh 上加载失败」。两处，一处在我们发的包里，一处只在老机器的部署副本上 —— 宿主 0.2.2 把 `list_agents` 并入 `dsh-tool-subagent-control` 主入口（`./list-agents` 子路径删除），又把 `toolFilter` 变成「键存在就抛」，于是老预设一挂载就整份注册失败，红队模式在选择器里消失。
+
+## 与上一版本 v1.3.8 的对比
+
+| 维度 | v1.3.8 | v1.3.9 |
+|---|---|---|
+| 补丁总数 | 73 | 73（不变） |
+| 0.2.1-rc.5 | 71 applied / 6 na | 71 applied / 6 na（不变） |
+| 0.2.2-rc.1 | 71 applied / 2 na | 71 applied / 2 na（不变） |
+| 预设里的 `.../list-agents` 行 | 还在，0.2.2 上 `never started` | 已删 |
+| 老机器部署副本里的死行 | 不处理 | 启动时自愈摘掉 |
+| 派活约束段的重复行 | 每轮可能多插一遍 | 已判重，只留一份 |
+| 红队模式在 0.2.2 上 | `registered-broken` | 正常注册 |
+
+改了三个文件：`presets/redteam/agent.cordis.yml`（删一行）、`lib/redteam/index.js`（自愈 + 判重）、`package.json`（版本）。补丁表、锚点、计数一律未动。
+
+## 缺陷一：预设里还留着 0.2.2 已删的子路径行
+
+`presets/redteam/agent.cordis.yml` 里原本有这一段：
+
+```yaml
+    - id: tool-subagent-list-agents
+      name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+      disabled: false
+```
+
+0.2.2-rc.1 的 `@deepseek-ai/dsh-tool-subagent-control` 只导出四个入口：
+
+```
+"."  "./src/*"  "./package.json"  "./locale/*.json"
+```
+
+`list_agents` 已经并进主入口 —— `lib/index.js` 的 `apply(ctx)` 里第 155 行直接 `registerListAgents(ctx)`。所以那条子路径解析直接失败：
+
+```
+ERROR  Package subpath './list-agents' is not defined by "exports" in
+       .../dsh-tool-subagent-control/package.json
+       code: ERR_PACKAGE_PATH_NOT_EXPORTED
+```
+
+后果不是少了 `list_agents` 一个工具，而是**那一行 never started → 整个预设被判 `registered-broken`**，`$DSH_HOME/redteam/preset-declare.json` 里能看到明细：
+
+```json
+{ "ok": false, "phase": "registered-broken", "plugins": 19,
+  "broken": "tool-subagent-list-agents (@deepseek-ai/dsh-tool-subagent-control/list-agents): never started" }
+```
+
+19 行里 18 行正常，就这一行挂着。修法是把这三行删掉；不能改成指向该包主入口 —— 同一个包注册两次会撞 provider 已注册。
+
+## 缺陷二：老机器上的部署副本不会被刷新
+
+`installPreset()` 在已有 `agent.cordis.yml` 时走自愈分支而不是覆盖（保留用户改动），原来的自愈只处理四件事：技能目录占位符、工具包名、`toolFilter`、`disabled: true`。
+
+但 `toolFilter` 那段文本是 1.1.31 时代的产物 —— 那时候预设里有：
+
+```yaml
+        toolFilter:
+          deny:
+            - subagent_fork
+            - workflow
+            - ralph
+```
+
+宿主从 0.2.1-rc.2 起对这两个字段是**键存在就抛**：
+
+```js
+for (const field of ["persona", "toolFilter"])
+  if (Object.hasOwn(config, field)) throw new Error(`tool-subagent: ${field} is no longer supported; …`)
+```
+
+于是老机器升级到 0.2.2 后，客户端报的是「该预设里的 toolFilter 已被新版 dsh 移除」，红队模式同样加载不出来 —— 和我们包里那份干净的文件无关，问题在**用户机器上那份从安装当天就没再变的副本**。
+
+1.3.9 补三件事：
+
+1. 自愈新增 `stripDeadSubagentRows()`：把 `name` 指向 `@deepseek-ai/dsh-tool-subagent-control/<子路径>` 的行整块摘掉。只认「这一行自己的 `name` 字段」（id 行之后第一条非空行），组行不会把整棵子树吞掉；摘完幂等，第二次跑 `changed = false`。
+2. `stripToolFilter()` 原来的判据是「`toolFilter:` 后面只剩空白或注释」，`toolFilter: { deny: [...] }` 与 `toolFilter: null` 这种同行写法会漏过去 —— 宿主照样抛错。现在放宽到「冒号后面有什么都算」，三种写法都摘。
+3. `repairDelegation()` 的「必须用原生 subagent 派活」那段改成**转义与非转义两种形态都算已存在**，避免模板里写的是 `` \` `` 而判重看的是普通反引号，每轮都多插一遍。
+
+## 验证
+
+四个案例，用真代码跑 `installPreset()`：
+
+| 案例 | 输入 | 期望 | 实测 |
+|---|---|---|---|
+| 1 | 老副本（带 `toolFilter` + `list-agents` 行） | 两处都修掉，其余保留 | `repaired = toolFilter+drop-dead-subagent-row+delegation`，`delegation` / `tool-subagent-control` / `tool-subagent` / `maxDepth: 1` 全在 |
+| 2 | 紧接着再跑一次 | 幂等 | `action = kept`，文本逐字节不变 |
+| 3 | 空目录（全新安装） | 落地新预设 | 386 行，`list-agents` 0 处，`delegation` 在 |
+| 4 | 真实已部署目录 | 不动或只修该修的 | 修完后 `list-agents` 0 处 |
+
+## 已知限制
+
+- 已部署副本只在**插件加载时**自愈，改完要重启 dsh 才生效；跑着的进程里还是旧预设。
+- 用户手工改过的预设不会被整份覆盖 —— 这是有意的（改一次就被冲掉更烦），代价是自愈只能覆盖**已知的那几类**漂移；将来 dsh 再改包入口，这里还要跟着加一条。
+- `list_agents` 在 0.2.1 及更早是独立子路径、在 0.2.2 并入主入口；本版按「子路径一律摘掉」处理，两代宿主上都对（0.2.1 上主入口本来也带 `list_agents`）。
+
 # 1.3.8
 
 一句话：修「插件内更新完点重启，dsh 没重启」—— 三处缺陷叠加在一条启动链上：vbs 无 BOM 在中文用户名下路径乱码、vbs 引号多包一层让 VBScript 报「语句未结束」、plus 助手未就绪时宿主照样退出。三个全修，换包这条链才通。

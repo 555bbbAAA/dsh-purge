@@ -293,10 +293,6 @@
       name: '@deepseek-ai/dsh-tool-subagent-control'
       disabled: false
 
-    - id: tool-subagent-list-agents
-      name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
-      disabled: false
-
     - id: tool-subagent
       name: '@deepseek-ai/dsh-tool-subagent'
       disabled: false

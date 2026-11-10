@@ -2,7 +2,7 @@
 
 DeepSeek Harness 桌面版的本地兼容层。基于上游 [1.1.71](https://github.com/YuJunZhiXue/dsh-purge) 维护，支持 0.2.1 整条版本线。
 
-当前版本 **1.3.8** · `dshTarget: >=0.2.1-0 <0.3.0` · MIT
+当前版本 **1.3.9** · `dshTarget: >=0.2.1-0 <0.3.0` · MIT
 
 ## 兼容性
 
